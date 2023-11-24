@@ -1,0 +1,49 @@
+
+**Step 1: Download XAMPP**
+1. Go to the this website and Download xampp: https://liquidtelecom.dl.sourceforge.net/project/xampp/XAMPP%20Windows/5.6.40/xampp-windows-x64-5.6.40-1-VC11-installer.exe
+
+**Step 2: Install XAMPP**
+1. Run the downloaded XAMPP installer.
+2. Follow the installation wizard instructions.
+3. During the installation, you choose to install recommended setup like Apache, MySQL, PHP, and phpMyAdmin.
+
+
+**Step 3: Start XAMPP Services**
+1. After installation, open the XAMPP Control Panel.
+2. After Setup Xampp control panel should pop up automatically startup the "Apache" service, "Mysql" Service and "FileZilla" Service.
+
+**Step 4: Verify Installation**
+1. Open your web browser.
+2. Enter "http://localhost" in the address bar. You should see the XAMPP dashboard, indicating that your server is up and running.
+
+**Step 5: Project Setup**
+1. Locate your project folder or unzip your project files if they are compressed.
+2. Place your project folder or files in the "htdocs" directory of your XAMPP installation. For Windows, this directory is typically located at "C:\xampp\htdocs." On macOS and Linux, you can find it in the "/Applications/XAMPP/htdocs" or "/opt/lampp/htdocs" directory, respectively.
+
+**Step 6: Access Your Project**
+1. Open your web browser.
+2. Enter "http://localhost/invoice_system" in the address bar. Replace "your-project-folder" with the name of your project folder.
+3. The project should now be accessible via your local XAMPP server.
+
+**Step 7: Database Setup**
+1. On your browswer go to https://localhost/phpmyadmin
+2. Click on Database and add "invoicemgsys" to the database name and then create.
+3. After Creating database click on SQL copy the whole code in your DATABASE FILE/invoicemgsys. "This file is located in your extracted project folder"
+4. Paste the copied code in the SQL field and click on Go
+
+**Step 8: Run Project**
+1. Now access project from http://localhost/invoice_system
+
+
+
+
+**Database Name: invoicemgsys**
+
+
+
+**Login Details**
+
+Username: admin
+Password: Password@123
+
+
