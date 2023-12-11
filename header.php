@@ -557,84 +557,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
           </div>
 
           <div class="level-2-page p-4">
-    <div class="text-center fs-6 semibold py-3">
-        <h2 style="font-size: 20px;"><b><?php echo "Number of invoices for $username: $invoice_count"; ?></b></h2>
-    </div>
+            <div class="text-center fs-6 semibold py-3">
+                <h2 style="font-size: 20px;"><b><?php echo "Number of invoices for $username: $invoice_count"; ?></b></h2>
+            </div>
 
-    <?php
-    if ($invoice_count > 1) {
-      // Check if the user is logged in
-      if (isset($_SESSION['login_username'])) {
-          $username = $_SESSION['login_username']; // Get the logged-in user's username
+            <?php
+            if ($invoice_count > 1) {
+              // Check if the user is logged in
+              if (isset($_SESSION['login_username'])) {
+                  $username = $_SESSION['login_username']; // Get the logged-in user's username
 
-          // Connect to your database
-          $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
+                  // Connect to your database
+                  $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
 
-          if (!$conn) {
-              die("Connection failed: " . mysqli_connect_error());
-          }
+                  if (!$conn) {
+                      die("Connection failed: " . mysqli_connect_error());
+                  }
 
-          // Query to fetch invoice data associated with the logged-in user
-          $sql = "SELECT i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount
-            FROM invoice_data i
-            INNER JOIN invoice_data_items it ON i.id = it.invoice_id
-            WHERE i.username = ?";
+                  // Query to fetch invoice data associated with the logged-in user
+                  $sql = "SELECT i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount, COUNT(*) as invoice_count
+                  FROM invoice_data i
+                  INNER JOIN invoice_data_items it ON i.id = it.invoice_id
+                  WHERE i.username = ?
+                  GROUP BY i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount";  
 
-          $stmt = $conn->prepare($sql);
+                  $stmt = $conn->prepare($sql);
 
-            if ($stmt) {
-                $stmt->bind_param("s", $username);
+                    if ($stmt) {
+                        $stmt->bind_param("s", $username);
 
-                if ($stmt->execute()) {
-                    $result = $stmt->get_result();
+                        if ($stmt->execute()) {
+                            $result = $stmt->get_result();
 
-                    if ($result->num_rows > 0) {
-                        echo '<table class="table">';
-                        echo '<thead>';
-                        echo '<tr>';
-                        echo '<th>Invoice Number</th>';
-                        echo '<th>Invoice Date</th>';
-                        echo '<th>From</th>';
-                        echo '<th>Bill To</th>';
-                        echo '<th>Amount</th>';
-                        echo '</tr>';
-                        echo '</thead>';
-                        echo '<tbody>';
+                            // ... (previous code)
 
-                        while ($row = $result->fetch_assoc()) {
-                            echo '<tr>';
-                            echo '<td>' . $row['invoice_number'] . '</td>';
-                            echo '<td>' . $row['invoice_date'] . '</td>';
-                            echo '<td>' . $row['from_field'] . '</td>';
-                            echo '<td>' . $row['bill_to'] . '</td>';
-                            echo '<td>' . $row['amount'] . '</td>';
-                            echo '</tr>';
+                            if ($result->num_rows > 0) {
+                              echo '<table class="table text-uppercase semibold">';
+                              echo '<thead>';
+                              echo '<tr>';
+                              echo '<th>Invoice Number</th>';
+                              echo '<th>Invoice Date</th>';
+                              echo '<th>From</th>';
+                              echo '<th>Bill To</th>';
+                              echo '<th>Amount</th>';
+                              echo '</tr>';
+                              echo '</thead>';
+                              echo '<tbody>';
+                          
+                              $totalAmount = 0; // Initialize total amount
+                          
+                              while ($invoice_row = $result->fetch_assoc()) {
+                                  echo '<tr>';
+                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_number'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?invoice_date=' . $invoice_row['invoice_date'] . '">' . $invoice_row['invoice_date'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?from_field=' . $invoice_row['from_field'] . '">' . $invoice_row['from_field'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?bill_to=' . $invoice_row['bill_to'] . '">' . $invoice_row['bill_to'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?amount=' . $invoice_row['amount'] . '">' . $invoice_row['amount'] . '</a></td>';
+                                  echo '</tr>';
+                          
+                                  // Accumulate the amount to calculate the total
+                                  $totalAmount += $invoice_row['amount'];
+                              }
+                          
+                              echo '<br><br>';
+                              echo '</tbody>';
+                              echo '<tfoot>';
+                              echo '<tr>';
+                              echo '<td colspan="4"><a class="" href="#">Total</a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . ' NGN<br/></a></td>';
+                              echo '</tr>';
+                              echo '<tr>';
+                              echo '<td colspan="4"><a class="" href="#">Paid Amount</a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">0.00 NGN<br/></a></td>';
+                              echo '</tr>';
+                              echo '<tr>';
+                              echo '<td colspan="4"><a class="" href="#">Balance Due</a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . ' NGN<br/></a></td>';
+                              echo '</tr>';
+                              echo '</tfoot>';
+                              echo '</table>';
+                          } else {
+                              echo "No invoice data available for $username.";
+                          }
+                          
+
+                        // ... (remaining code)
+
+                        } else {
+                            // Handle the error
+                            echo "Error: " . $stmt->error;
                         }
 
-                        echo '</tbody>';
-                        echo '</table>';
+                        $stmt->close();
                     } else {
-                        echo "No invoice data available for $username.";
+                        // Handle the error in preparing the statement
+                        echo "Error in preparing the statement: " . $conn->error;
                     }
+
+                    // Close the database connection
+                    $conn->close();
                 } else {
-                    // Handle the error
-                    echo "Error: " . $stmt->error;
+                    echo "User is not logged in.";
                 }
+              }
+              ?>
 
-                $stmt->close();
-            } else {
-                // Handle the error in preparing the statement
-                echo "Error in preparing the statement: " . $conn->error;
-            }
 
-            // Close the database connection
-            $conn->close();
-        } else {
-            echo "User is not logged in.";
-        }
-      }
-      ?>
-</div>
+
+        </div>
 
         </div>
       </div>
