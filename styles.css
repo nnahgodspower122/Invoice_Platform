@@ -1,0 +1,221 @@
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Styles for the popup form */
+.popup-form {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+    border-radius: 8px;
+    position: relative;
+}
+
+/* Close button styles */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #888;
+}
+
+/* Input field styles */
+.popup-form input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Button styles */
+.popup-form button {
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.popup-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Style the form container */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: -80px;
+  height: 10px;
+  
+}
+
+/* Style the search form */
+.search-form {
+  display: flex;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0px 0px 5px 0px #ccc;
+}
+
+/* Style the search input */
+.search-input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 5px 0 0 5px;
+  outline: none;
+  width: 300px;
+}
+
+/* Style the search button */
+.search-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 0 5px 5px 0;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* Hover effect for the search button */
+.search-button:hover {
+  background-color: #0056b3;
+}
+
+
+/* Style the dropdown menu */
+.dropdown-menu {
+  border: 1px solid #ccc;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+  background-color: #fff;
+}
+
+/* Style the user image */
+.user-image {
+  border-radius: 50%;
+}
+
+/* Style the username */
+.dropdown-menu .user-menu a {
+  color: #333; /* Text color */
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* Style the "Log out" button */
+.dropdown-menu .user-menu a.btn {
+  color: #fff; /* Text color */
+  background-color: #f00; /* Background color */
+  border-color: #f00; /* Border color */
+  text-transform: uppercase;
+}
+
+/* Hover effect on "Log out" button */
+.dropdown-menu .user-menu a.btn:hover {
+  background-color: #ff0000; /* Hover background color */
+  border-color: #ff0000; /* Hover border color */
+}
+
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+
+    .table th, .table td {
+        border: 1px solid #ddd;
+        padding: 15px; /* Increase the padding for more height */
+        margin-left: 20px;
+        text-align: center;
+        height: 50px; /* Increase the height for more space */
+    }
+
+    .table th {
+        background-color: #f2f2f2;
+    }
+
+    .table td {
+      margin-left: 10px;
+    }
+
+    .table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .table tr:hover {
+        background-color: #ddd;
+    }
+
+    /* CSS styling for search results */
+.search-results {
+    margin-top: 20px;
+    
+    float: center;
+    justify-content: center; /* Horizontal centering */
+    align-items: center; /* Vertical centering */
+    position: relative;
+    text-align: center;
+    
+
+}
+
+.result-item {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    float: center;
+    justify-content: center;
+    margin-left: 37%;
+    width: 30%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+
+.result-item p {
+    margin: 5px 0;
+}
+
+/* Style for 'No results found' message */
+.no-results {
+    color: #f00; /* Red color for alert message */
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+
+/* Style the cancel button */
+.cancel-button {
+    background-color: #87CEEB; /* Sky blue color */
+    color: #fff; /* Text color */
+    padding: 8px 16px; /* Adjust padding as needed */
+    border: none;
+    cursor: pointer;
+    margin-top: 10px; /* Adjust margin from search results */
+    border-radius: 5px; /* Rounded corners */
+    display: inline-block;
+}
+
+.cancel-button:hover {
+    background-color: #5F9EA0; /* Change background color on hover */
+}
