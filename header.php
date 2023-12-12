@@ -14,7 +14,7 @@ if (isset($_SESSION['login_username'])) {
     }
 
     // Query to count the number of invoice data records for the logged-in user
-    $sql = "SELECT COUNT(*) AS invoice_count FROM invoice_data WHERE username = ?";
+    $sql = "SELECT COUNT(*) AS invoice_count, invoice_currency_format FROM invoice_data WHERE username = ?";
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
@@ -24,6 +24,8 @@ if (isset($_SESSION['login_username'])) {
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
             $invoice_count = $row['invoice_count'];
+            $invoice_currency_format = $row['invoice_currency_format'];
+
 
             // Display the invoice count in your HTML
             echo "";
@@ -535,12 +537,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
               </li> -->
               <li class="nav-item">
                 <a class="nav-link" href="#">
-                  Unpaid&nbsp;<span class='badge rounded-pill bg-warning'>0</span>
+                  Unpaid&nbsp;<span class='badge rounded-pill bg-warning'><div id="unpaidCount"></div></span>
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#">
-                  Paid&nbsp;<span class='badge rounded-pill bg-success'>0</span>
+                  Paid&nbsp;<span class='badge rounded-pill bg-success'><div id="paidCount"></div></span>
                 </a>
               </li>
               <li class="nav-item">
@@ -556,13 +558,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
             </ul>
           </div>
 
+          <script>
+            // Use jQuery to make an AJAX request to your PHP script
+            $.ajax({
+                url: 'count_status.php', // Change this to the actual path of your PHP script
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    $('#paidCount').html(response.paid);
+                    $('#unpaidCount').html(response.unpaid);
+                },
+                error: function() {
+                    $('#paidCount').html('Error fetching "paid" status count.');
+                    $('#unpaidCount').html('Error fetching "unpaid" status count.');
+                }
+            });
+        </script>
+
+
+<?php
+
+    // Check if the user is logged in
+    if (isset($_SESSION['login_username'])) {
+        $username = $_SESSION['login_username']; // Get the logged-in user's username
+
+        // Connect to your database
+        $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
+
+        if (!$conn) {
+            die("Connection failed: " . mysqli_connect_error());
+        }
+
+        // Query to get the total amount for records with "paid" status
+        $totalAmountPaidSql = "SELECT SUM(amount) AS total_amount_paid FROM invoice_data_items WHERE invoice_id IN (SELECT id FROM invoice_data WHERE username = ? AND statuses = 'paid')";
+        $totalAmountPaidStmt = $conn->prepare($totalAmountPaidSql);
+
+        if ($totalAmountPaidStmt) {
+            $totalAmountPaidStmt->bind_param("s", $username);
+
+            if ($totalAmountPaidStmt->execute()) {
+                $totalAmountPaidResult = $totalAmountPaidStmt->get_result();
+                $totalAmountPaidRow = $totalAmountPaidResult->fetch_assoc();
+                $totalAmountPaid = $totalAmountPaidRow['total_amount_paid'];
+
+                // Display the total amount paid in your HTML
+                
+            } else {
+                // Handle the error
+                echo "Error: " . $totalAmountPaidStmt->error;
+            }
+
+            $totalAmountPaidStmt->close();
+        } else {
+            // Handle the error in preparing the statement
+            echo "Error in preparing the statement: " . $conn->error;
+        }
+
+        // Close the database connection
+        $conn->close();
+    } else {
+        echo "User is not logged in.";
+    }
+?>
+
           <div class="level-2-page p-4">
             <div class="text-center fs-6 semibold py-3">
                 <h2 style="font-size: 20px;"><b><?php echo "Number of invoices for $username: $invoice_count"; ?></b></h2>
+ 
             </div>
 
             <?php
-            if ($invoice_count > 1) {
+            if ($invoice_count > 0) {
               // Check if the user is logged in
               if (isset($_SESSION['login_username'])) {
                   $username = $_SESSION['login_username']; // Get the logged-in user's username
@@ -609,10 +675,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                               while ($invoice_row = $result->fetch_assoc()) {
                                   echo '<tr>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_number'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?invoice_date=' . $invoice_row['invoice_date'] . '">' . $invoice_row['invoice_date'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?from_field=' . $invoice_row['from_field'] . '">' . $invoice_row['from_field'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?bill_to=' . $invoice_row['bill_to'] . '">' . $invoice_row['bill_to'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?amount=' . $invoice_row['amount'] . '">' . $invoice_row['amount'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_date'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['from_field'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['bill_to'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['amount'] . '</a></td>';
                                   echo '</tr>';
                           
                                   // Accumulate the amount to calculate the total
@@ -624,15 +690,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                               echo '<tfoot>';
                               echo '<tr>';
                               echo '<td colspan="4"><a class="" href="#">Total</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . ' NGN<br/></a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
                               echo '</tr>';
                               echo '<tr>';
                               echo '<td colspan="4"><a class="" href="#">Paid Amount</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">0.00 NGN<br/></a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmountPaid, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
                               echo '</tr>';
                               echo '<tr>';
                               echo '<td colspan="4"><a class="" href="#">Balance Due</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . ' NGN<br/></a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
                               echo '</tr>';
                               echo '</tfoot>';
                               echo '</table>';
@@ -661,7 +727,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                 }
               }
               ?>
-
+<div id="totalAmountPaid"></div>
 
 
         </div>
@@ -689,6 +755,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
         </div>
     </div> 
   </div> 
+  <script>
+        // Check for the presence of the delete_success parameter in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const deleteSuccess = urlParams.get('update_success');
+
+        // Display a prompt if the delete_success parameter is present
+        if (deleteSuccess === 'true') {
+            alert('Record updated successfully!');
+        }
+    </script>
+    <script>
+        // Check for the presence of the delete_success parameter in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const deleteSuccess = urlParams.get('delete_success');
+
+        // Display a prompt if the delete_success parameter is present
+        if (deleteSuccess === 'true') {
+            alert('Record deleted successfully!');
+        }
+    </script>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiG5z5F5d5Fk5fa" crossorigin="anonymous">
   <!-- jQuery -->

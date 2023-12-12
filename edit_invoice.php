@@ -38,9 +38,12 @@
                         $ship_to = $row['ship_to'];
                         $terms = $row['terms'];
                         $amount = $row['amount'];
+                        $image = $row['image'];
+                        $logo_image = $row['logo_image'];
                         $description = $row['description'];
                         $discount = $row['discount'];
                         $tax = $row['tax'];
+                        $tax_name = $row['tax_name'];
                         $quantity = $row['quantity'];
                         $invoice_currency_format = $row['invoice_currency_format'];
 
@@ -244,7 +247,7 @@
         <div class="level-1-tabs">
           <ul class="nav nav-tabs">
             <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">
+              <a class="nav-link active" aria-current="page" href="header.php">
                 <i class="fa fa-fw fa-list-ul background-font-color"></i>&nbsp;My Invoices
               </a>
             </li>
@@ -255,12 +258,12 @@
           <div class="level-2-tabs">
             <ul class="nav nav-tabs">
               <li class="nav-item">
-                <a class="nav-link active" href="#">
+                <a class="nav-link active" href="edit_invoice.php?invoice_number=<?php echo $invoice_number; ?>">
                   <i class="fa-fw fas fa-pencil-alt icon-edit"></i>Edit <?php echo $invoice_number; ?></span>
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link " aria-current="page" href="/invoices/115964115/emails">
+                <a class="nav-link " aria-current="page" href="email-tab.php?invoice_number=<?php echo $invoice_number; ?>">
                     <i class="fa-fw far fa-envelope icon-email"></i> Email
                 </a>  
               </li>
@@ -270,14 +273,14 @@
                 </a>
               </li> -->
               <li class="nav-item">
-                    <a class="nav-link " aria-current="page" href="/invoices/115964115/confirm_delete">
+                    <a class="nav-link " aria-current="page" href="delete-invoice.php?invoice_number=<?php echo $invoice_number; ?>">
                     <i class="fa-fw far fa-trash-alt icon-delete"></i> Delete
                 </a>  
               </li>
               <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="/invoices/115964115/download.pdf">
-                    <i class="fa fa-arrow-down icon-download"></i> Download
-                </a>  
+                <a class="nav-link" aria-current="page" href="payment.php?invoice_number=<?php echo $invoice_number; ?>">
+                  <i class="fa fa-fw fa-circle overdue" aria-hidden="true"></i> Payments
+                </a>    
               </li>
               <!-- <li class="nav-item">
                 <a class="nav-link" href="#">
@@ -291,17 +294,29 @@
               </li> -->
             </ul>
           </div>
+          <div class="level-2-page p-4">
+            
+
+            <div class="level-3-tabs">
+                <ul class="nav nav-tabs">      
+                  <li class="nav-item"><a id="change-invoice-type-to-basic" aria-current="page" class="nav-link active">Basic Form</a></li>
+                  <li class="nav-item" style="white-space: nowrap;"><a href="edit_advance_invoice.php?invoice_number=<?php echo $invoice_number; ?>" aria-current="page" class="nav-link ">Advanced Form - <span class='fw-bold'>Due Date, Ship To, Qty</span></a></li>	      
+                  <li class="nav-item">
+                  </li>
+                </ul>
+            </div>
+
 
           <div class="level-2-page p-4">
             <div class="text-center fs-6 semibold py-3">
             </div>
 
         <div class="p-4 guest-page">
-            <form class="edit_invoice" id="invoice-form" action="process_invoice.php" accept-charset="UTF-8" data-remote="true" method="post" enctype="multipart/form-data">
+            <form class="edit_invoice" id="invoice-form" action="process_invoice3.php" accept-charset="UTF-8" data-remote="true" method="post" enctype="multipart/form-data">
                 <div class="row">
                   <div class="col-8">
                     <label for="invoice_from" class="form-label"><i class="fa fa-user icon"></i>&nbsp;&nbsp;From</label>
-                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($from_field); ?>" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="from" id="invoice_from" required></textarea>
+                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($from_field); ?>" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="from" id="invoice_from" required><?php echo htmlspecialchars($from_field); ?></textarea>
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
@@ -317,7 +332,6 @@
                               </label>
                               <input type="file" name="logo_image" id="signatureLogoInput1" style="display: none;" accept="image/*" required>
                               <img id="uploadedImage1" style="display: none;" width="100" height="100" style="display: none; margin-left: 30px;; text-align: center;">
-
                           </button>
                       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                       <script>
@@ -352,12 +366,12 @@
                 <div class="row my-3">
                   <div class="col-8">
                     <label for="invoice_billing" class="form-label"><i class="fa fa-female icon"></i><i class="fa fa-male icon"></i>&nbsp;&nbsp;Bill To</label>
-                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($bill_to); ?>" rows="5" style="height: 8em;" tabindex="2" maxlength="5000" name="bill_to" id="invoice_billing" required></textarea>
+                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($bill_to); ?>" rows="5" style="height: 8em;" tabindex="2" maxlength="5000" name="bill_to" id="invoice_billing" required><?php echo htmlspecialchars($bill_to); ?></textarea>
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
                   <label for="invoice_number" class="form-label"><i class="fa fa-search icon"></i>&nbsp;Invoice #</label>
-                    <input class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($invoice_number); ?>" tabindex="3" maxlength="100" size="100" type="text" name="invoice_number" id="invoice_number" required/><br>
+                    <input class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($invoice_number); ?>" value="<?php echo htmlspecialchars($invoice_number); ?>" tabindex="3" maxlength="100" size="100" type="text" name="invoice_number" id="invoice_number" /><br>
 
                     <!-- <script>
                     // Function to generate a unique invoice number
@@ -429,15 +443,15 @@
 
                   <div class="row mb-3" id='row_item_212952714'>
                       <div class="col-5">
-                          <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="<?php echo htmlspecialchars($description); ?>" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"></textarea>
+                          <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="<?php echo htmlspecialchars($description); ?>" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"><?php echo htmlspecialchars($description); ?></textarea>
                       </div>
 
                       <div class="col-2">
-                          <input class="form-control amount description form-control-sm" placeholder="<?php echo htmlspecialchars($amount); ?>" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][amount]" id="invoice_items_attributes_0_amount" />
+                          <input class="form-control amount description form-control-sm" placeholder="<?php echo htmlspecialchars($amount); ?>" value="<?php echo htmlspecialchars($amount); ?>" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][amount]" id="invoice_items_attributes_0_amount" />
                       </div>
 
                       <div class="col-2">
-                          <input class="form-control discount description form-control-sm" placeholder="<?php echo htmlspecialchars($discount); ?>" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][discount]" id="invoice_items_attributes_0_discount" />
+                          <input class="form-control discount description form-control-sm" placeholder="<?php echo htmlspecialchars($discount); ?>" value="<?php echo htmlspecialchars($discount); ?>" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][discount]" id="invoice_items_attributes_0_discount" />
                       </div>
 
                         <div class="col-2">
@@ -448,9 +462,9 @@
                             <div class="popup-form" > <!-- Initially hidden -->
                               <span class="close-button" onclick="closePopup(event)">&times;</span>
                               <h2>Add A Tax</h2>
-                              <input type="text" name="invoice[items_attributes][0][tax_name]]" placeholder="Tax Name" id="taxName">
-                              <input type="text" class="tax" placeholder="Tax Rate %" tabindex="212952714" name="invoice[items_attributes][0][tax]" id="invoice_items_attributes_0_tax">
-                              <button onclick="addTax(event)">"<?php echo htmlspecialchars($tax); ?>"</button>
+                              <input type="text" name="invoice[items_attributes][0][tax_name]]" placeholder="Tax Name" value="<?php echo htmlspecialchars($tax_name); ?>" id="taxName">
+                              <input type="text" class="tax" placeholder="Tax Rate %" tabindex="212952714" name="invoice[items_attributes][0][tax]" value="<?php echo htmlspecialchars($tax); ?>" id="invoice_items_attributes_0_tax">
+                              <button onclick="addTax(event)">Add Tax</button>
                             </div>
                         </div>
                         <script>
@@ -519,7 +533,7 @@
                 <div id="total">
                   <div class="row mt-4">
                     <div class="col-6 col-md-3 offset-md-6" style="font-size: 13px;">Subtotal</div>
-                    <div class="col-6 col-md-3 text-end" style="font-size: 13px;"><?php echo htmlspecialchars($amount); ?></div>
+                    <div id="subtotal" class="col-6 col-md-3 text-end" style="font-size: 13px;">0.00</div>
 
                   </div>
                     <div class="row my-4">
@@ -552,7 +566,7 @@
                     Terms &amp; Conditions	
                     
                     </a></label>
-                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($terms); ?>" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="terms" id="terms" required></textarea>
+                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($terms); ?>" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="terms" id="terms" required><?php echo htmlspecialchars($terms); ?></textarea>
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
@@ -561,7 +575,7 @@
                         
                         <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
                             <label for="signatureLogoInput" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">Add your Signature</label>
-                            <input type="file" name="image" id="signatureLogoInput" accept="image/*" style="display: none;" onchange="displayImage(this)" required>
+                            <input type="file" name="image" id="signatureLogoInput" value="<?php echo htmlspecialchars($image); ?>" accept="image/*" style="display: none;" onchange="displayImage(this)" required>
                         </button>
                         <div id="imagePreview"></div>
 
@@ -602,11 +616,11 @@
                   <div class="col">
                       <button type="submit" name="save_and_download" class="btn btn-success done w-100"><i class="fa fa-fw fa-save"></i> Save and Download Invoice</button>
                   </div>
-                  <div class="col">
+                  <!-- <div class="col">
                     <button type="button" class="btn btn-info w-100" onclick="submitForm('email_button')" id="emailButton" disabled>
                         <i class="fa fa-fw fa-envelope"></i> Send to Email
                     </button>
-                  </div>
+                  </div> -->
 
                   <script>
                   document.addEventListener('DOMContentLoaded', function() {
@@ -661,8 +675,6 @@
       </div>
     </div>
   </div>
-
-
 
   <div class="row text-center" style="margin-top: 50px;">
     <div class="col">
