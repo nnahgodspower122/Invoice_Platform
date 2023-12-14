@@ -280,9 +280,9 @@
                 </a>  
               </li>
               <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="/invoices/115964115/download.pdf">
-                    <i class="fa fa-arrow-down icon-download"></i> Download
-                </a>  
+                <a class="nav-link" aria-current="page" href="payment.php?invoice_number=<?php echo $invoice_number; ?>">
+                  <i class="fa fa-fw fa-circle overdue" aria-hidden="true"></i> Payments
+                </a>    
               </li>
               <!-- <li class="nav-item">
                 <a class="nav-link" href="#">
@@ -299,6 +299,77 @@
           <div class="level-2-page p-4">
             
 
+          <?php
+
+
+
+// Check if the user is logged in
+if (isset($_SESSION['login_username'])) {
+    $username = $_SESSION['login_username']; // Get the logged-in user's username
+
+    // Connect to your database
+    $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
+
+    if (!$conn) {
+        die("Connection failed: " . mysqli_connect_error());
+    }
+
+    // Check if 'invoice_number' is set in the URL
+    if (isset($_GET['invoice_number'])) {
+        $invoice_number = $_GET['invoice_number'];
+
+        // Retrieve invoice details from the database based on username and invoice_number
+$sql = "SELECT * FROM invoice_data WHERE username = ? AND invoice_number = ?";
+$stmt = $conn->prepare($sql);
+
+if ($stmt) {
+    $stmt->bind_param("ss", $username, $invoice_number);
+
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // Fetch the data
+            $row = $result->fetch_assoc();
+
+
+            // Retrieve image paths
+            $imagePath = $row['image_path'];
+            $logoImagePath = $row['logo_image_path'];
+
+            // Debugging: Display the image paths
+            // echo "Image Path: $imagePath<br>";
+            // echo "Logo Image Path: $logoImagePath<br>";
+
+            // Display the images
+
+        } else {
+            echo "Invoice not found.";
+        }
+    } else {
+        // Handle the error
+        echo "Error executing the query: " . $stmt->error;
+    }
+
+    $stmt->close();
+} else {
+    // Handle the error in preparing the statement
+    echo "Error preparing the statement: " . $conn->error;
+}
+
+
+        // Close the database connection
+        $conn->close();
+    } else {
+        echo "Invoice number not set in the URL.";
+    }
+} else {
+    echo "User is not logged in.";
+}
+
+?>
+
+
             <div class="level-3-tabs">
                 <ul class="nav nav-tabs">      
                   <li class="nav-item"><a href="edit_invoice.php?invoice_number=<?php echo $invoice_number; ?>" aria-current="page" class="nav-link ">Basic Form</a></li>
@@ -314,28 +385,31 @@
             </div>
 
             <div class="p-4 guest-page">
-            <form class="edit_invoice" id="invoice-form" action="process_invoice2.php" accept-charset="UTF-8" data-remote="true" method="post" enctype="multipart/form-data">
+            <form class="edit_invoice" id="invoice-form" action="process_invoice4.php" accept-charset="UTF-8" data-remote="true" method="post" enctype="multipart/form-data">
                 <div class="row">
                   <div class="col-8">
                     <label for="invoice_from" class="form-label"><i class="fa fa-user icon"></i>&nbsp;&nbsp;From</label>
-                    <textarea class="form-control form-control-sm" placeholder="Your Company or Name Address" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="from" id="invoice_from" required><?php echo htmlspecialchars($from_field); ?></textarea>
+                    <textarea class="form-control form-control-sm" placeholder="Your Company or Name Address" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="from" id="invoice_from" required><?php $from_field = str_replace('\r', "\r", $from_field);
+                      $from_field = str_replace('\n', "\n", $from_field);
+
+                      echo (htmlspecialchars($from_field)); ?></textarea>
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
                     <div id="logo" class="mt-2 position-relative">
                       <br>
-                          <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
-                              <label for="signatureLogoInput1" id="uploadLabel1" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">
-                                  Select Logo
-                                  <br>
-                                  <img src="https://images.invoicehome.com/all-logos.png" width="16" height="16" />
-                                  <br>
-                                  Logo Gallery
-                              </label>
-                              <input type="file" name="logo_image" id="signatureLogoInput1" style="display: none;" accept="image/*" required>
-                              <img id="uploadedImage1" style="display: none;" width="100" height="100" style="display: none; margin-left: 30px;; text-align: center;">
+                      <?php
+                          // Check if $logoImagePath is not empty before displaying the image
+                          if (!empty($logoImagePath)) {
+                              echo "<img src='$logoImagePath' width='130' height='130' alt='Logo'>";
+                          } else {
+                              echo "<img src='https://images.invoicehome.com/all-logos.png' width='16' height='16' alt='Default Logo'>";
+                          }
+                          ?>
+                          <br>
+                      </label>
+                      <img id="uploadedImage1" style="display: none;" width="100" height="100" style="display: none; margin-left: 30px;; text-align: center;">
 
-                          </button>
                       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                       <script>
                       $(document).ready(function() {
@@ -367,7 +441,10 @@
                 <div class="row my-3">
                   <div class="col-8">
                     <label for="invoice_billing" class="form-label"><i class="fa fa-female icon"></i><i class="fa fa-male icon"></i>&nbsp;&nbsp;Bill To</label>
-                    <textarea class="form-control form-control-sm" placeholder="Your customer's billing address" rows="5" style="height: 8em;" tabindex="2" maxlength="5000" name="bill_to" id="invoice_billing" required><?php echo htmlspecialchars($bill_to); ?></textarea>
+                    <textarea class="form-control form-control-sm" placeholder="Your customer's billing address" rows="5" style="height: 8em;" tabindex="2" maxlength="5000" name="bill_to" id="invoice_billing" required><?php $bill_to = str_replace('\r', "\r", $bill_to);
+                      $bill_to = str_replace('\n', "\n", $bill_to);
+
+                      echo (htmlspecialchars($bill_to)); ?></textarea>
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
@@ -423,7 +500,10 @@
                 <div class="row">
                     <div class="col-8">
                         <label for="invoice_shipping" class="form-label"><i class="fa fa-plane icon"></i>&nbsp;&nbsp;Ship To</label>
-                        <textarea class="form-control form-control-sm" placeholder="Your customers shipping address (optional)" rows="5" style="height: 8em;" tabindex="3" maxlength="5000" name="ship_to" id="invoice_shipping"><?php echo htmlspecialchars($ship_to); ?>
+                        <textarea class="form-control form-control-sm" placeholder="Your customers shipping address (optional)" rows="5" style="height: 8em;" tabindex="3" maxlength="5000" name="ship_to" id="invoice_shipping"><?php $ship_to = str_replace('\r', "\r", $ship_to);
+                      $ship_to = str_replace('\n', "\n", $ship_to);
+
+                      echo (htmlspecialchars($ship_to)); ?>
                         </textarea>
                     </div>
                     <div class="col-4 col-md-3 offset-md-1">
@@ -494,7 +574,10 @@
                             <input type="text" name="invoice[items_attributes][0][quantity]" value="<?php echo htmlspecialchars($quantity); ?>" id="invoice_items_attributes_0_quantity" placeholder="Qty" class="form-control form-control-sm quantity" tabindex="214495989" maxlength="100" />
                         </div>    
                         <div class="col-3">
-                            <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" value="<?php echo htmlspecialchars($description); ?>" placeholder="Description" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"></textarea>
+                            <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" value="<?php echo htmlspecialchars($description); ?>" placeholder="Description" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"><?php $description = str_replace('\r', "\r", $description);
+                      $description = str_replace('\n', "\n", $description);
+
+                      echo (htmlspecialchars($description)); ?></textarea>
                         </div>
                         
                         <div class="col-2 form-group">
@@ -624,10 +707,12 @@
                     <div id="logo" class="mt-2 position-relative">
                         <br>
                         
-                        <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
-                            <label for="signatureLogoInput" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">Add your Signature</label>
-                            <input type="file" name="image" id="signatureLogoInput" accept="image/*" style="display: none;" onchange="displayImage(this)" required>
-                        </button>
+                        <?php
+                          // Check if $imagePath is not empty before displaying the image
+                          if (!empty($imagePath)) {
+                              echo "<img src='$imagePath' width='130' height='130' alt='Image'><br>";
+                          }
+                          ?>
                         <div id="imagePreview"></div>
 
 
@@ -712,9 +797,8 @@
 
   <div class="row text-center" style="margin-top: 50px;">
     <div class="col">
-      
 
-          <img alt="NIGERIA" src="images/nig.jpg" width="32" height="32" />&nbsp;&nbsp;Nigeria&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
+        <img alt="INDIA" src="images/india.png" width="32" height="32" />&nbsp;&nbsp;INDIA&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
 
         </div>
       </div>

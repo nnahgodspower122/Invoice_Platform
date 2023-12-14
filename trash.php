@@ -2,122 +2,68 @@
 	//check login
 	include("session.php");
 
-  // Check if the user is logged in
-  if (isset($_SESSION['login_username'])) {
-      $username = $_SESSION['login_username']; // Get the logged-in user's username
-  
-      // Connect to your database
-      $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
-  
-      if (!$conn) {
-          die("Connection failed: " . mysqli_connect_error());
-      }
-  
-      // Query to count the number of invoice data records for the logged-in user with is_deleted = 0
-      $sql_active = "SELECT COUNT(*) AS active_invoice_count FROM invoice_data WHERE username = ? AND is_deleted = 0";
-      $stmt_active = $conn->prepare($sql_active);
-  
-      if ($stmt_active) {
-          $stmt_active->bind_param("s", $username);
-  
-          if ($stmt_active->execute()) {
-              $result_active = $stmt_active->get_result();
-              $row_active = $result_active->fetch_assoc();
-              $active_invoice_count = $row_active['active_invoice_count'];
-          } else {
-              // Handle the error
-              echo "Error: " . $stmt_active->error;
-          }
-  
-          $stmt_active->close();
-      } else {
-          // Handle the error in preparing the statement
-          echo "Error in preparing the statement: " . $conn->error;
-      }
-  
-      // Query to count the number of invoice data records for the logged-in user with is_deleted = 1
-      $sql_deleted = "SELECT COUNT(*) AS deleted_invoice_count FROM invoice_data WHERE username = ? AND is_deleted = 1";
-      $stmt_deleted = $conn->prepare($sql_deleted);
-  
-      if ($stmt_deleted) {
-          $stmt_deleted->bind_param("s", $username);
-  
-          if ($stmt_deleted->execute()) {
-              $result_deleted = $stmt_deleted->get_result();
-              $row_deleted = $result_deleted->fetch_assoc();
-              $deleted_invoice_count = $row_deleted['deleted_invoice_count'];
-
-          } else {
-              // Handle the error
-              echo "Error: " . $stmt_deleted->error;
-          }
-  
-          $stmt_deleted->close();
-      } else {
-          // Handle the error in preparing the statement
-          echo "Error in preparing the statement: " . $conn->error;
-      }
-  
-      // Close the database connection
-      $conn->close();
-  } else {
-      echo "User is not logged in.";
-  }
-?>
-
-<?php
-
-
-// Check if the user is logged in
-if (isset($_SESSION['login_username'])) {
-    $username = $_SESSION['login_username']; // Get the logged-in user's username
-
-    // Connect to your database
-    $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
-
-    if (!$conn) {
-        die("Connection failed: " . mysqli_connect_error());
-    }
-
-    // Query to count the number of invoice data records for the logged-in user
-    $sql = "SELECT COUNT(*) AS invoice_count, invoice_currency_format FROM invoice_data WHERE username = ? AND is_deleted = 0";
-    $stmt = $conn->prepare($sql);
-
-
-    if ($stmt) {
-        $stmt->bind_param("s", $username);
-
-        if ($stmt->execute()) {
-            $result = $stmt->get_result();
-            $row = $result->fetch_assoc();
-            $invoice_count = $row['invoice_count'];
-            $invoice_currency_format = $row['invoice_currency_format'];
-
-
-            // Display the invoice count in your HTML
-            echo "";
-        } else {
-            // Handle the error
-            echo "Error: " . $stmt->error;
+    // Check if the user is logged in
+    if (isset($_SESSION['login_username'])) {
+        $username = $_SESSION['login_username']; // Get the logged-in user's username
+    
+        // Connect to your database
+        $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
+    
+        if (!$conn) {
+            die("Connection failed: " . mysqli_connect_error());
         }
+    
+        // Query to count the number of invoice data records for the logged-in user with is_deleted = 0
+        $sql_active = "SELECT COUNT(*) AS active_invoice_count FROM invoice_data WHERE username = ? AND is_deleted = 0";
+        $stmt_active = $conn->prepare($sql_active);
+    
+        if ($stmt_active) {
+            $stmt_active->bind_param("s", $username);
+    
+            if ($stmt_active->execute()) {
+                $result_active = $stmt_active->get_result();
+                $row_active = $result_active->fetch_assoc();
+                $active_invoice_count = $row_active['active_invoice_count'];
+            } else {
+                // Handle the error
+                echo "Error: " . $stmt_active->error;
+            }
+    
+            $stmt_active->close();
+        } else {
+            // Handle the error in preparing the statement
+            echo "Error in preparing the statement: " . $conn->error;
+        }
+    
+        // Query to count the number of invoice data records for the logged-in user with is_deleted = 1
+        $sql_deleted = "SELECT COUNT(*) AS deleted_invoice_count FROM invoice_data WHERE username = ? AND is_deleted = 1";
+        $stmt_deleted = $conn->prepare($sql_deleted);
+    
+        if ($stmt_deleted) {
+            $stmt_deleted->bind_param("s", $username);
+    
+            if ($stmt_deleted->execute()) {
+                $result_deleted = $stmt_deleted->get_result();
+                $row_deleted = $result_deleted->fetch_assoc();
+                $deleted_invoice_count = $row_deleted['deleted_invoice_count'];
 
-        $stmt->close();
+            } else {
+                // Handle the error
+                echo "Error: " . $stmt_deleted->error;
+            }
+    
+            $stmt_deleted->close();
+        } else {
+            // Handle the error in preparing the statement
+            echo "Error in preparing the statement: " . $conn->error;
+        }
+    
+        // Close the database connection
+        $conn->close();
     } else {
-        // Handle the error in preparing the statement
-        echo "Error in preparing the statement: " . $conn->error;
+        echo "User is not logged in.";
     }
-
-    // Close the database connection
-    $conn->close();
-} else {
-    echo "User is not logged in.";
-}
-
-
-
-
 ?>
-
 
 
 <!DOCTYPE html>
@@ -589,7 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
           <div class="level-2-tabs">
             <ul class="nav nav-tabs">
               <li class="nav-item">
-                <a class="nav-link active" href="#">
+                <a class="nav-link " href="header.php">
                   All Invoices&nbsp;<span class='badge rounded-pill bg-primary'><?php echo $active_invoice_count; ?></span>
                 </a>
               </li>
@@ -619,7 +565,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="trash.php">
+                <a class="nav-link active" href="#">
                   Trash&nbsp;<span class='badge rounded-pill bg-secondary'><?php echo $deleted_invoice_count; ?></span>
                 </a>
               </li>
@@ -648,54 +594,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
         </script>
 
 
-<?php
-
-    // Check if the user is logged in
-    if (isset($_SESSION['login_username'])) {
-        $username = $_SESSION['login_username']; // Get the logged-in user's username
-
-        // Connect to your database
-        $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
-
-        if (!$conn) {
-            die("Connection failed: " . mysqli_connect_error());
-        }
-
-        // Query to get the total amount for records with "paid" status
-        $totalAmountPaidSql = "SELECT SUM(amount) AS total_amount_paid FROM invoice_data_items WHERE invoice_id IN (SELECT id FROM invoice_data WHERE username = ? AND statuses = 'paid')";
-        $totalAmountPaidStmt = $conn->prepare($totalAmountPaidSql);
-
-        if ($totalAmountPaidStmt) {
-            $totalAmountPaidStmt->bind_param("s", $username);
-
-            if ($totalAmountPaidStmt->execute()) {
-                $totalAmountPaidResult = $totalAmountPaidStmt->get_result();
-                $totalAmountPaidRow = $totalAmountPaidResult->fetch_assoc();
-                $totalAmountPaid = $totalAmountPaidRow['total_amount_paid'];
-
-                // Display the total amount paid in your HTML
-                
-            } else {
-                // Handle the error
-                echo "Error: " . $totalAmountPaidStmt->error;
-            }
-
-            $totalAmountPaidStmt->close();
-        } else {
-            // Handle the error in preparing the statement
-            echo "Error in preparing the statement: " . $conn->error;
-        }
-
-        // Close the database connection
-        $conn->close();
-    } else {
-        echo "User is not logged in.";
-    }
-?>
 
           <div class="level-2-page p-4">
             <div class="text-center fs-6 semibold py-3">
-                <h2 style="font-size: 20px;"><b><?php echo "Number of invoices for $username: $active_invoice_count"; ?></b></h2>
+                <h2 style="font-size: 15px;"><b><?php echo "Documents that have been in Trash more than 30 days will be automatically deleted."; ?></b></h2>
  
             </div>
 
@@ -712,14 +614,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                       die("Connection failed: " . mysqli_connect_error());
                   }
 
-                 // Query to fetch invoice data associated with the logged-in user
                   $sql = "SELECT i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount, COUNT(*) as invoice_count
                   FROM invoice_data i
                   INNER JOIN invoice_data_items it ON i.id = it.invoice_id
-                  WHERE i.username = ? AND i.is_deleted = 0
-                  GROUP BY i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount;
-                  ";
-
+                  WHERE i.username = ? AND i.is_deleted = 1
+                  GROUP BY i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount";
 
                   $stmt = $conn->prepare($sql);
 
@@ -745,20 +644,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                               echo '<tbody>';
                           
                               $totalAmount = 0; // Initialize total amount
-                              
+                          
                               while ($invoice_row = $result->fetch_assoc()) {
                                   echo '<tr>';
-                                  $invoice_row['from_field'] = str_replace('\r', "\r", $invoice_row['from_field']);
-                                  $invoice_row['from_field'] = str_replace('\n', "\n", $invoice_row['from_field']);
-
-                                  $invoice_row['bill_to'] = str_replace('\r', "\r", $invoice_row['bill_to']);
-                                  $invoice_row['bill_to'] = str_replace('\n', "\n", $invoice_row['bill_to']);
-
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_number'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_date'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['from_field'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['bill_to'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['amount'] . '</a></td>';
+                                  echo '<td>';
+                                  echo '<form action="change_deleted_status.php" method="post">';
+                                  echo '<input type="hidden" name="invoice_number" value="' . $invoice_row['invoice_number'] . '">';
+                                  echo '<button type="submit" name="change_status_button">Restore</button>';
+                                  echo '</form>';
+                                  echo '</td>';
                                   echo '</tr>';
                           
                                   // Accumulate the amount to calculate the total
@@ -767,23 +666,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                           
                               echo '<br><br>';
                               echo '</tbody>';
-                              echo '<tfoot>';
-                              echo '<tr>';
-                              echo '<td colspan="4"><a class="" href="#">Total</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
-                              echo '</tr>';
-                              echo '<tr>';
-                              echo '<td colspan="4"><a class="" href="#">Paid Amount</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmountPaid, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
-                              echo '</tr>';
-                              echo '<tr>';
-                              echo '<td colspan="4"><a class="" href="#">Balance Due</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
-                              echo '</tr>';
-                              echo '</tfoot>';
+                              
                               echo '</table>';
                           } else {
-                              echo "No invoice data available for $username.";
+                              echo "No invoice data has been deleted";
                           }
                           
 
@@ -840,10 +726,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
   <script>
         // Check for the presence of the delete_success parameter in the URL
         const urlParams = new URLSearchParams(window.location.search);
-        const updateSuccess = urlParams.get('update_success');
+        const deleteSuccess = urlParams.get('update_success');
 
         // Display a prompt if the delete_success parameter is present
-        if (updateSuccess === 'true') {
+        if (deleteSuccess === 'true') {
             alert('Record updated successfully!');
         }
     </script>
@@ -854,16 +740,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
 
         // Display a prompt if the delete_success parameter is present
         if (deleteSuccess === 'true') {
-            alert('Record deleted successfully!');
-        }
-    </script>
-    <script>
-        // Check for the presence of the delete_success parameter in the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const changeSuccess = urlParams.get('status_change_success');
-
-        // Display a prompt if the delete_success parameter is present
-        if (changeSuccess === 'true') {
             alert('Record deleted successfully!');
         }
     </script>

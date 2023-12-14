@@ -130,43 +130,31 @@
 
 <style>
     /* Style for form container */
-    form {
-        max-width: 400px;
-        margin: auto;
-        padding: 20px;
+
+    label {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+
+    select {
+        padding: 8px;
+        font-size: 14px;
         border: 1px solid #ccc;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        background-color: #fff;
-    }
-
-    /* Style for label */
-    .semibold {
-        font-weight: bold;
-    }
-
-    /* Style for radio buttons and labels */
-    .fs-3 {
-        font-size: 1.2em;
-    }
-
-    /* Style for hidden input */
-    #invoice_number {
-        display: none;
-    }
-
-    /* Style for submit button */
-    input[type="submit"] {
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 15px;
-        border: none;
         border-radius: 4px;
-        cursor: pointer;
-        font-size: 1.2em;
     }
 
-    /* Hover effect for submit button */
+    input[type="submit"] {
+        background-color: #4CAF50; /* Green background color */
+        color: white; /* White text color */
+        padding: 10px 20px; /* Add some padding */
+        font-size: 16px; /* Set the font size */
+        border: none; /* Remove border */
+        border-radius: 4px; /* Add border radius */
+        cursor: pointer; /* Add a pointer cursor on hover */
+    }
+
+    /* Change button color on hover */
     input[type="submit"]:hover {
         background-color: #45a049;
     }
@@ -367,13 +355,16 @@
                         <label class='semibold fs-3'>Select payment status</label>
                         <div class='semibold fs-3'>
                         <input class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($invoice_number); ?>" value="<?php echo htmlspecialchars($invoice_number); ?>" tabindex="3" maxlength="100" size="100" type="text" name="invoice_number" id="invoice_number" hidden/><br>
-                            <input type="radio" name="statuses" id="option1" value="paid" checked>
-                            <label for="paid">Paid</label>
+                        
+                        <select name="statuses" id="statuses">
+                            <option value="paid" selected>Paid</option>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="partial">Partially paid</option>
+                        </select>
 
-                            <input type="radio" name="statuses" id="option2" value="pending">
-                            <label for="option2">Pending</label>
                         </div>
-                        <br>
+                        <br><br>
 
                         <!-- Submit Button -->
                         <input type="submit" value="Submit">
@@ -393,10 +384,7 @@
 
   <div class="row text-center" style="margin-top: 50px;">
     <div class="col">
-      
-
-          <img alt="NIGERIA" src="images/nig.jpg" width="32" height="32" />&nbsp;&nbsp;Nigeria&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
-
+          <img alt="INDIA" src="images/india.png" width="32" height="32" />&nbsp;&nbsp;INDIA&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
         </div>
       </div>
 

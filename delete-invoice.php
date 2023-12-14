@@ -323,7 +323,7 @@
     <div class="col">
       
 
-          <img alt="NIGERIA" src="images/nig.jpg" width="32" height="32" />&nbsp;&nbsp;Nigeria&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
+         <img alt="INDIA" src="images/india.png" width="32" height="32" />&nbsp;&nbsp;INDIA&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
 
         </div>
       </div>

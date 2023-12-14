@@ -14,13 +14,25 @@ if (isset($_SESSION['login_username'])) {
                     die("Connection failed: " . mysqli_connect_error());
                 }
 
-                // Get the logo_image data and escape special characters
+                // Get the logo_image data and move it to the 'upload' folder
                 $logoImageData = file_get_contents($_FILES['logo_image']['tmp_name']);
-                $escapedLogoImageData = mysqli_real_escape_string($conn, $logoImageData);
+                $logoImagePath = "upload/" . $_FILES['logo_image']['name'];
+                move_uploaded_file($_FILES['logo_image']['tmp_name'], $logoImagePath);
+                // move_uploaded_file($logoImageData, $logoImagePath);
 
-                // Get the image data and escape special characters
+                // Get the image data and move it to the 'upload' folder
                 $imageData = file_get_contents($_FILES['image']['tmp_name']);
-                $escapedImageData = mysqli_real_escape_string($conn, $imageData);
+                $imagePath = "upload/" . $_FILES['image']['name'];
+                move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
+                // move_uploaded_file($imageData, $imagePath);
+                
+                // Get the logo_image data and escape special characters
+                // $logoImageData = file_get_contents($_FILES['logo_image']['tmp_name']);
+                // $escapedLogoImageData = mysqli_real_escape_string($conn, $logoImageData);
+
+                // // // Get the image data and escape special characters
+                // // $imageData = file_get_contents($_FILES['image']['tmp_name']);
+                // $escapedImageData = mysqli_real_escape_string($conn, $imageData);
 
 
                 // Retrieve and validate form data
@@ -32,11 +44,11 @@ if (isset($_SESSION['login_username'])) {
                 $invoice_currency_format = mysqli_real_escape_string($conn, $_POST['invoice_currency_format']);
 
                 // Insert invoice details into the 'invoice_data' table, associating them with the logged-in user
-                $sql = "INSERT INTO invoice_data (username, from_field, bill_to, invoice_number, invoice_date, terms, invoice_currency_format, image, logo_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO invoice_data (username, from_field, bill_to, invoice_number, invoice_date, terms, invoice_currency_format, image_path, logo_image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql);
 
                 if ($stmt) {
-                    $stmt->bind_param("sssssssbb", $username, $from, $bill_to, $invoice_number, $invoice_date, $terms, $invoice_currency_format, $escapedImageData, $escapedLogoImageData);
+                    $stmt->bind_param("sssssssss", $username, $from, $bill_to, $invoice_number, $invoice_date, $terms, $invoice_currency_format, $imagePath, $logoImagePath);
 
                     if ($stmt->execute()) {
                         // Invoice data inserted successfully
@@ -61,7 +73,11 @@ if (isset($_SESSION['login_username'])) {
 
                                 if ($stmt->execute()) {
                                     // Item data inserted successfully
-                                    echo "";
+                                    // echo "<img src='$logoImagePath' alt='Logo'>";
+                                    // echo "<img src='$imagePath' alt='Logo'>";
+                                    // echo $logoImagePath;
+
+
                                 } else {
                                     // Handle the error
                                     echo "Error: " . $stmt->error;
@@ -165,7 +181,10 @@ class PDF extends FPDF {
 
     function generateInvoiceFromForm($formData) {
         $this->AddPage();
-        $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
+        $logoImagePath = "upload/" . $_FILES['logo_image']['name'];
+        move_uploaded_file($_FILES['logo_image']['tmp_name'], $logoImagePath);
+        
+        $logoImageData = file_get_contents($logoImagePath);       
         $fileTypeNew = pathinfo($_FILES['logo_image']['name'], PATHINFO_EXTENSION); // Get file extension
             	// Page header
         $this->InHeader = true;
@@ -179,20 +198,7 @@ class PDF extends FPDF {
             $ship_to = isset($formData['ship_to']) ? $formData['ship_to'] : '';
             $invoice_currency_format = isset($formData['invoice_currency_format']) ? $formData['invoice_currency_format'] : '';
             $items = isset($formData['invoice']['items_attributes']) ? $formData['invoice']['items_attributes']: [];
-        // $this->SetFont('Arial', 'B', 12);
-        // $this->Cell(60, 10, 'Invoice Number: ' . $invoice_number);
-        // $this->Ln();
 
-        // $this->SetFont('Arial', '');
-        // $this->Cell(60, 10, 'Bill To: ' . $bill_to);
-        // $this->Ln();
-
-        // $this->Cell(60, 10, 'Ship To: ' . $ship_to);
-        // $this->Ln(15);
-
-        // $this->addFromDetails();
-        // // Columns for Bill To, Ship To, Invoice IDs
-        
         $this->addFromDetails($formData);
         $this->SetFont('Arial', 'B', 12);
         $this->SetTextColor(0, 0, 128);
@@ -221,8 +227,6 @@ class PDF extends FPDF {
         // Set the font and any other styling if needed
         $this->SetFont('Arial', '');
 
-
-
         // Save the current X and Y positions
         $startX = $this->GetX();
         $startY = $this->GetY();
@@ -240,8 +244,6 @@ class PDF extends FPDF {
         // Column 3 - Move to the start position for the next cell with less left margin
         $this->SetXY($startX + $column3Margin, $startY);
         $this->MultiCell($columnWidth, $rowHeight, $column3Text, 0, 'R');
-
-
 
         // Move to the next line
         $this->Ln(14);
@@ -290,20 +292,7 @@ class PDF extends FPDF {
             // Calculate subtotal for each items
             // $subtotal += $amount - $discount% + $tax%;
         }
-            // echo '<pre>';
-            // print_r($invoice_currency_format);
-            // echo '</pre>';
-        //Display Subtotal and Total
-        // $this->SetFont('Arial', 'B', 10);
-        // $this->Cell(153, 10, 'Subtotal:', 0, 0, 'R');
-        // $this->Cell(37, 10, $invoice_currency_format . $subtotal, 1, 1, 'R');
-        
-        // $formattedTax = $tax . '%';
-        // $this->Cell(153, 10, $tax_name . ' ' . $formattedTax, 0, 0, 'R');
-        // $tax = 0.15 * $subtotal; // Example Tax Calculation (15%)
-        // $total = $subtotal + $tax;
-        // $this->Cell(37, 10, $invoice_currency_format . $tax, 1, 1, 'R');
-        
+
         $total = $subtotal;
         $this->SetFont('Arial', 'B', 12);
         $this->Cell(153, 10, 'Total:', 0, 0, 'R');
@@ -311,12 +300,17 @@ class PDF extends FPDF {
         $formattedTotal = number_format($total, 2, '.', '');
         $this->Cell(37, 10, $invoice_currency_format . $formattedTotal, 1, 1, 'R', true);
 
-        $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
+        // $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
         $fileTypeNew = pathinfo($_FILES['logo_image']['name'], PATHINFO_EXTENSION); // Get file extension
 
-        $imageData = null;
+        // $imageData = null;
 
-        $imageData = isset($_FILES['image']['tmp_name']) ? file_get_contents($_FILES['image']['tmp_name']) : null;
+        $imagePath = "upload/" . $_FILES['image']['name'];
+        move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
+        
+        $imageData = file_get_contents($imagePath);  
+
+        // $imageData = isset($_FILES['image']['tmp_name']) ? file_get_contents($_FILES['image']['tmp_name']) : null;
         $fileType = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION); // Get file extension
 
         

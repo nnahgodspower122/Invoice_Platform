@@ -13,13 +13,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             die("Connection failed: " . mysqli_connect_error());
         }
 
-        // Get the logo_image data and escape special characters
         $logoImageData = file_get_contents($_FILES['logo_image']['tmp_name']);
-        $escapedLogoImageData = mysqli_real_escape_string($conn, $logoImageData);
+        $logoImagePath = "upload/" . $_FILES['logo_image']['name'];
+        move_uploaded_file($_FILES['logo_image']['tmp_name'], $logoImagePath);
+        // move_uploaded_file($logoImageData, $logoImagePath);
 
-        // Get the image data and escape special characters
+        // Get the image data and move it to the 'upload' folder
         $imageData = file_get_contents($_FILES['image']['tmp_name']);
-        $escapedImageData = mysqli_real_escape_string($conn, $imageData);
+        $imagePath = "upload/" . $_FILES['image']['name'];
+        move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
 
         // Retrieve form data
         $from = $_POST['from'];
@@ -33,11 +35,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $invoice_currency_format = mysqli_real_escape_string($conn, $_POST['invoice_currency_format']);
 
         // Insert invoice details into the 'invoices' table
-        $sql = "INSERT INTO invoice_data (username, from_field, bill_to, ship_to, po_number, due_date, invoice_number, invoice_date, terms, invoice_currency_format, image, logo_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO invoice_data (username, from_field, bill_to, ship_to, po_number, due_date, invoice_number, invoice_date, terms, invoice_currency_format, image_path, logo_image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
 
         if ($stmt) {
-            $stmt->bind_param("ssssssssssbb", $username, $from, $bill_to, $ship_to, $po_number, $due_date, $invoice_number, $invoice_date, $terms, $invoice_currency_format, $escapedImageData, $escapedLogoImageData);
+            $stmt->bind_param("ssssssssssss", $username, $from, $bill_to, $ship_to, $po_number, $due_date, $invoice_number, $invoice_date, $terms, $invoice_currency_format, $imagePath, $logoImagePath);
 
             if ($stmt->execute()) {
                 // Invoice data inserted successfully
@@ -165,7 +167,10 @@ class PDF extends FPDF {
 
     function generateInvoiceFromForm($formData) {
         $this->AddPage();
-        $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
+        $logoImagePath = "upload/" . $_FILES['logo_image']['name'];
+        move_uploaded_file($_FILES['logo_image']['tmp_name'], $logoImagePath);
+        
+        $logoImageData = file_get_contents($logoImagePath);  
         $fileTypeNew = pathinfo($_FILES['logo_image']['name'], PATHINFO_EXTENSION); // Get file extension
             	// Page header
         $this->InHeader = true;
@@ -439,9 +444,10 @@ class PDF extends FPDF {
         $formattedTotal = number_format($total, 2, '.', '');
         $this->Cell(34, 10, $invoice_currency_format . $formattedTotal, 1, 1, 'R', true);
 
-        $imageData = null;
-
-        $imageData = isset($_FILES['image']['tmp_name']) ? file_get_contents($_FILES['image']['tmp_name']) : null;
+        $imagePath = "upload/" . $_FILES['image']['name'];
+        move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
+        
+        $imageData = file_get_contents($imagePath);  
         $fileType = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION); // Get file extension
 
         // Call function to display signature

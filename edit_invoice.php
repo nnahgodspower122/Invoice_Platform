@@ -1,77 +1,77 @@
 <?php
-    // Check login
-    include("session.php");
+// Check login
+include("session.php");
 
-    // Check if the user is logged in
-    if (isset($_SESSION['login_username'])) {
-        $username = $_SESSION['login_username']; // Get the logged-in user's username
+// Check if the user is logged in
+if (isset($_SESSION['login_username'])) {
+    $username = $_SESSION['login_username']; // Get the logged-in user's username
 
-        // Connect to your database
-        $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
+    // Connect to your database
+    $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
 
-        if (!$conn) {
-            die("Connection failed: " . mysqli_connect_error());
-        }
-
-        // Check if 'invoice_number' is set in the URL
-        if (isset($_GET['invoice_number'])) {
-            $invoice_number = $_GET['invoice_number'];
-
-            // Query to retrieve invoice data for the logged-in user and specific invoice number
-            $sql = "SELECT i.*, ii.* FROM invoice_data i
-            JOIN invoice_data_items ii ON i.id = ii.invoice_id
-            WHERE i.username = ? AND i.invoice_number = ?";
-            $stmt = $conn->prepare($sql);
-
-            if ($stmt) {
-                $stmt->bind_param("ss", $username, $invoice_number);
-
-                if ($stmt->execute()) {
-                    $result = $stmt->get_result();
-
-                    if ($result->num_rows > 0) {
-                        // Fetch and display the invoice data
-                        $row = $result->fetch_assoc();
-                        $invoice_date = $row['invoice_date'];
-                        $from_field = $row['from_field'];
-                        $bill_to = $row['bill_to'];
-                        $ship_to = $row['ship_to'];
-                        $terms = $row['terms'];
-                        $amount = $row['amount'];
-                        $image = $row['image'];
-                        $logo_image = $row['logo_image'];
-                        $description = $row['description'];
-                        $discount = $row['discount'];
-                        $tax = $row['tax'];
-                        $tax_name = $row['tax_name'];
-                        $quantity = $row['quantity'];
-                        $invoice_currency_format = $row['invoice_currency_format'];
-
-                        // Display the invoice data in your HTML
-                        // Example: echo "Invoice Number: $invoice_number, Date: $invoice_date, ...";
-                    } else {
-                        echo "No records found for the specified invoice number.";
-                    }
-                } else {
-                    // Handle the error
-                    echo "Error: " . $stmt->error;
-                }
-
-                $stmt->close();
-            } else {
-                // Handle the error in preparing the statement
-                echo "Error in preparing the statement: " . $conn->error;
-            }
-        } else {
-            echo "Invoice number not provided in the URL.";
-        }
-
-        // Close the database connection
-        $conn->close();
-    } else {
-        echo "User is not logged in.";
+    if (!$conn) {
+        die("Connection failed: " . mysqli_connect_error());
     }
+
+    // Check if 'invoice_number' is set in the URL
+    if (isset($_GET['invoice_number'])) {
+        $invoice_number = $_GET['invoice_number'];
+
+        // Query to retrieve invoice data for the logged-in user and specific invoice number
+        $sql = "SELECT i.*, ii.* FROM invoice_data i
+        JOIN invoice_data_items ii ON i.id = ii.invoice_id
+        WHERE i.username = ? AND i.invoice_number = ?";
+        $stmt = $conn->prepare($sql);
+
+        if ($stmt) {
+            $stmt->bind_param("ss", $username, $invoice_number);
+
+            if ($stmt->execute()) {
+                $result = $stmt->get_result();
+
+                if ($result->num_rows > 0) {
+                    // Fetch and display the invoice data
+                    $row = $result->fetch_assoc();
+                    $invoice_date = $row['invoice_date'];
+                    $from_field = $row['from_field'];
+                    $bill_to = $row['bill_to'];
+                    $ship_to = $row['ship_to'];
+                    $terms = $row['terms'];
+                    $amount = $row['amount'];
+                    $imageData = $row['image'];
+                    $logo_image = $row['logo_image'];
+                    $description = $row['description'];
+                    $discount = $row['discount'];
+                    $tax = $row['tax'];
+                    $tax_name = $row['tax_name'];
+                    $quantity = $row['quantity'];
+                    $invoice_currency_format = $row['invoice_currency_format'];
+
+                    // Output other HTML as needed
+                } else {
+                    echo "No records found for the specified invoice number.";
+                }
+            } else {
+                // Handle the error
+                echo "Error: " . $stmt->error;
+            }
+
+            $stmt->close();
+        } else {
+            // Handle the error in preparing the statement
+            echo "Error in preparing the statement: " . $conn->error;
+        }
+    } else {
+        echo "Invoice number not provided in the URL.";
+    }
+
+    // Close the database connection
+    $conn->close();
+} else {
+    echo "User is not logged in.";
+}
 ?>
+
 
 
 
@@ -241,6 +241,9 @@
     </div>
 </div>
 
+
+
+
   <div class="container-xl" style="margin-top: 50px;">
     <div class="row pb-4">
       <div class="col-lg-10 col-md-11 mx-auto">
@@ -296,7 +299,75 @@
           </div>
           <div class="level-2-page p-4">
             
+<?php
 
+
+
+// Check if the user is logged in
+if (isset($_SESSION['login_username'])) {
+    $username = $_SESSION['login_username']; // Get the logged-in user's username
+
+    // Connect to your database
+    $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
+
+    if (!$conn) {
+        die("Connection failed: " . mysqli_connect_error());
+    }
+
+    // Check if 'invoice_number' is set in the URL
+    if (isset($_GET['invoice_number'])) {
+        $invoice_number = $_GET['invoice_number'];
+
+        // Retrieve invoice details from the database based on username and invoice_number
+$sql = "SELECT * FROM invoice_data WHERE username = ? AND invoice_number = ?";
+$stmt = $conn->prepare($sql);
+
+if ($stmt) {
+    $stmt->bind_param("ss", $username, $invoice_number);
+
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // Fetch the data
+            $row = $result->fetch_assoc();
+
+
+            // Retrieve image paths
+            $imagePath = $row['image_path'];
+            $logoImagePath = $row['logo_image_path'];
+
+            // Debugging: Display the image paths
+            // echo "Image Path: $imagePath<br>";
+            // echo "Logo Image Path: $logoImagePath<br>";
+
+            // Display the images
+
+        } else {
+            echo "Invoice not found.";
+        }
+    } else {
+        // Handle the error
+        echo "Error executing the query: " . $stmt->error;
+    }
+
+    $stmt->close();
+} else {
+    // Handle the error in preparing the statement
+    echo "Error preparing the statement: " . $conn->error;
+}
+
+
+        // Close the database connection
+        $conn->close();
+    } else {
+        echo "Invoice number not set in the URL.";
+    }
+} else {
+    echo "User is not logged in.";
+}
+
+?>
             <div class="level-3-tabs">
                 <ul class="nav nav-tabs">      
                   <li class="nav-item"><a id="change-invoice-type-to-basic" aria-current="page" class="nav-link active">Basic Form</a></li>
@@ -316,23 +387,28 @@
                 <div class="row">
                   <div class="col-8">
                     <label for="invoice_from" class="form-label"><i class="fa fa-user icon"></i>&nbsp;&nbsp;From</label>
-                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($from_field); ?>" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="from" id="invoice_from" required><?php echo htmlspecialchars($from_field); ?></textarea>
+                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($from_field); ?>" rows="5" style="height: 8em;" tabindex="1" maxlength="5000" name="from" id="invoice_from" required><?php $from_field = str_replace('\r', "\r", $from_field);
+                      $from_field = str_replace('\n', "\n", $from_field);
+
+                      echo (htmlspecialchars($from_field)); ?></textarea>
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
                       <div id="logo" class="mt-2 position-relative">
                           <br>
-                          <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
-                              <label for="signatureLogoInput1" id="uploadLabel1" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">
-                                  Select Logo
-                                  <br>
-                                  <img src="https://images.invoicehome.com/all-logos.png" width="16" height="16" />
-                                  <br>
-                                  Logo Gallery
-                              </label>
-                              <input type="file" name="logo_image" id="signatureLogoInput1" style="display: none;" accept="image/*" required>
-                              <img id="uploadedImage1" style="display: none;" width="100" height="100" style="display: none; margin-left: 30px;; text-align: center;">
-                          </button>
+                          
+                          <?php
+                          // Check if $logoImagePath is not empty before displaying the image
+                          if (!empty($logoImagePath)) {
+                              echo "<img src='$logoImagePath' width='130' height='130' alt='Logo'>";
+                          } else {
+                              echo "<img src='https://images.invoicehome.com/all-logos.png' width='16' height='16' alt='Default Logo'>";
+                          }
+                          ?>
+                          <br>
+                      </label>
+                      <img id="uploadedImage1" style="display: none;" width="100" height="100" style="display: none; margin-left: 30px;; text-align: center;">
+
                       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                       <script>
                       $(document).ready(function() {
@@ -366,7 +442,10 @@
                 <div class="row my-3">
                   <div class="col-8">
                     <label for="invoice_billing" class="form-label"><i class="fa fa-female icon"></i><i class="fa fa-male icon"></i>&nbsp;&nbsp;Bill To</label>
-                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($bill_to); ?>" rows="5" style="height: 8em;" tabindex="2" maxlength="5000" name="bill_to" id="invoice_billing" required><?php echo htmlspecialchars($bill_to); ?></textarea>
+                    <textarea class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars($bill_to); ?>" rows="5" style="height: 8em;" tabindex="2" maxlength="5000" name="bill_to" id="invoice_billing" required><?php $bill_to = str_replace('\r', "\r", $bill_to);
+                      $bill_to = str_replace('\n', "\n", $bill_to);
+
+                      echo (htmlspecialchars($bill_to)); ?></textarea>
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
@@ -443,7 +522,10 @@
 
                   <div class="row mb-3" id='row_item_212952714'>
                       <div class="col-5">
-                          <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="<?php echo htmlspecialchars($description); ?>" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"><?php echo htmlspecialchars($description); ?></textarea>
+                          <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="<?php echo htmlspecialchars($description); ?>" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"><?php $description = str_replace('\r', "\r", $description);
+                      $description = str_replace('\n', "\n", $description);
+
+                      echo (htmlspecialchars($description)); ?></textarea>
                       </div>
 
                       <div class="col-2">
@@ -572,12 +654,13 @@
                   <div class="col-4 col-md-3 offset-md-1">
                     <div id="logo" class="mt-2 position-relative">
                         <br>
-                        
-                        <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
-                            <label for="signatureLogoInput" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">Add your Signature</label>
-                            <input type="file" name="image" id="signatureLogoInput" value="<?php echo htmlspecialchars($image); ?>" accept="image/*" style="display: none;" onchange="displayImage(this)" required>
-                        </button>
-                        <div id="imagePreview"></div>
+                           <div id="imagePreview"></div>
+                      <?php
+                      // Check if $imagePath is not empty before displaying the image
+                      if (!empty($imagePath)) {
+                          echo "<img src='$imagePath' width='130' height='130' alt='Image'><br>";
+                      }
+                      ?>
 
 
                     </div>
@@ -680,7 +763,7 @@
     <div class="col">
       
 
-          <img alt="NIGERIA" src="images/nig.jpg" width="32" height="32" />&nbsp;&nbsp;Nigeria&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
+    <img alt="INDIA" src="images/india.png" width="32" height="32" />&nbsp;&nbsp;INDIA&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
 
         </div>
       </div>

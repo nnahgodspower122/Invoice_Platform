@@ -15,35 +15,36 @@ if (isset($_SESSION['login_username'])) {
             }
 
             $invoice_number = mysqli_real_escape_string($conn, $_POST['invoice_number']);
-                // Check if records already exist for the user and invoice id
-                $checkExistingSql = "SELECT image_path, logo_image_path FROM invoice_data WHERE username = ? AND invoice_number = ?";
-                $checkExistingStmt = $conn->prepare($checkExistingSql);
             
-                if ($checkExistingStmt) {
-                    $checkExistingStmt->bind_param("ss", $username, $invoice_number);
+            // Check if records already exist for the user and invoice id
+            $checkExistingSql = "SELECT image_path, logo_image_path FROM invoice_data WHERE username = ? AND invoice_number = ?";
+            $checkExistingStmt = $conn->prepare($checkExistingSql);
             
-                    if ($checkExistingStmt->execute()) {
-                        $result = $checkExistingStmt->get_result();
+            if ($checkExistingStmt) {
+                $checkExistingStmt->bind_param("ss", $username, $invoice_number);
             
-                        if ($result->num_rows > 0) {
-                            // Records already exist, retrieve existing paths and assign them to new variables
-                            list($existingImagePath, $existingLogoImagePath) = $result->fetch_row();
+                if ($checkExistingStmt->execute()) {
+                    $result = $checkExistingStmt->get_result();
             
-                            // Now you can use $existingImagePath and $existingLogoImagePath as needed
-                            echo "";
-                        } else {
-                            echo "does not exist";
-                        }
+                    if ($result->num_rows > 0) {
+                        // Records already exist, retrieve existing paths and assign them to new variables
+                        list($existingImagePath, $existingLogoImagePath) = $result->fetch_row();
+            
+                        // Now you can use $existingImagePath and $existingLogoImagePath as needed
+                        echo "";
                     } else {
-                        // Handle the error
-                        echo "Error: " . $checkExistingStmt->error;
+                        echo "does not exist";
                     }
-            
-                    $checkExistingStmt->close();
                 } else {
-                    // Handle the error in preparing the statement
-                    echo "Error in preparing the statement: " . $conn->error;
+                    // Handle the error
+                    echo "Error: " . $checkExistingStmt->error;
                 }
+            
+                $checkExistingStmt->close();
+            } else {
+                // Handle the error in preparing the statement
+                echo "Error in preparing the statement: " . $conn->error;
+            }
 
             // Get the logo_image data and move it to the 'upload' folder
             $logoImageData = $existingLogoImagePath;
@@ -55,12 +56,15 @@ if (isset($_SESSION['login_username'])) {
             $imagePath = $existingImagePath;
             move_uploaded_file($imageData, $imagePath);
 
-            // Retrieve and validate form data
-            $from = mysqli_real_escape_string($conn, $_POST['from']);
-            $bill_to = mysqli_real_escape_string($conn, $_POST['bill_to']);
-            $invoice_number = mysqli_real_escape_string($conn, $_POST['invoice_number']);
-            $invoice_date = mysqli_real_escape_string($conn, $_POST['invoice_date']);
-            $terms = mysqli_real_escape_string($conn, $_POST['terms']);
+            // Retrieve form data
+            $from = $_POST['from'];
+            $bill_to = $_POST['bill_to'];
+            $ship_to = $_POST['ship_to'];
+            $po_number = $_POST['po_number'];
+            $due_date = $_POST['due_date'];
+            $invoice_number = $_POST['invoice_number'];
+            $invoice_date = $_POST['invoice_date'];
+            $terms = $_POST['terms'];
             $invoice_currency_format = mysqli_real_escape_string($conn, $_POST['invoice_currency_format']);
 
             // Check if the invoice number already exists
@@ -72,36 +76,37 @@ if (isset($_SESSION['login_username'])) {
 
             if ($result->num_rows > 0) {
                 // Update existing record
-                $update_sql = "UPDATE invoice_data SET from_field = ?, bill_to = ?, invoice_date = ?, terms = ?, invoice_currency_format = ? WHERE username = ? AND invoice_number = ?";
+                $update_sql = "UPDATE invoice_data SET from_field = ?, bill_to = ?, ship_to = ?, po_number = ?, due_date = ?, invoice_date = ?, terms = ?, invoice_currency_format = ? WHERE username = ? AND invoice_number = ?";
                 $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("sssssss", $from, $bill_to, $invoice_date, $terms, $invoice_currency_format, $username, $invoice_number);
+                $update_stmt->bind_param("ssssssssss", $from, $bill_to, $ship_to, $po_number, $due_date, $invoice_date, $terms, $invoice_currency_format, $username, $invoice_number);
 
                 if ($update_stmt->execute()) {
-                    // Existing record updated successfully
+                    // Invoice data updated successfully
                     $invoice_id = $result->fetch_assoc()['id'];
                     $update_stmt->close();
-                    // Proceed with updating or inserting items...
 
                     // Accessing items
                     $items = $_POST['invoice']['items_attributes'];
                     foreach ($items as $item) {
+                        $quantity = mysqli_real_escape_string($conn, $item['quantity']);
                         $description = mysqli_real_escape_string($conn, $item['description']);
+                        $price = mysqli_real_escape_string($conn, $item['price']);
                         $amount = mysqli_real_escape_string($conn, $item['amount']);
                         $discount = mysqli_real_escape_string($conn, $item['discount']);
                         $tax = mysqli_real_escape_string($conn, $item['tax']);
                         $tax_name = mysqli_real_escape_string($conn, $item['tax_name']);
 
-                        // Insert or update item details into the 'invoice_data_items' table, associating them with the invoice
-                        $item_sql = "INSERT INTO invoice_data_items (invoice_id, description, amount, discount, tax, tax_name) VALUES (?, ?, ?, ?, ?, ?)
-                                     ON DUPLICATE KEY UPDATE description = VALUES(description), amount = VALUES(amount), discount = VALUES(discount), tax = VALUES(tax), tax_name = VALUES(tax_name)";
+                        // Insert or update item details into the 'invoice_items' table, associating them with the invoice
+                        $item_sql = "INSERT INTO invoice_data_items (invoice_id, quantity, description, price, amount, discount, tax, tax_name) 
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
+                                     ON DUPLICATE KEY UPDATE quantity = VALUES(quantity), description = VALUES(description), price = VALUES(price), amount = VALUES(amount), discount = VALUES(discount), tax = VALUES(tax), tax_name = VALUES(tax_name)";
                         $item_stmt = $conn->prepare($item_sql);
 
                         if ($item_stmt) {
-                            $item_stmt->bind_param("dsssss", $invoice_id, $description, $amount, $discount, $tax, $tax_name);
+                            $item_stmt->bind_param("dsssssss", $invoice_id, $quantity, $description, $price, $amount, $discount, $tax, $tax_name);
 
                             if ($item_stmt->execute()) {
                                 // Item data inserted or updated successfully
-                                echo "";
                             } else {
                                 // Handle the error
                                 echo "Error: " . $item_stmt->error;
@@ -118,6 +123,7 @@ if (isset($_SESSION['login_username'])) {
                     echo "Error updating record: " . $update_stmt->error;
                 }
             } else {
+                // Handle the error in preparing the statement
                 echo "Record not found";
             }
 
@@ -130,7 +136,6 @@ if (isset($_SESSION['login_username'])) {
         echo "User is not logged in.";
     }
 }
-
 
 
 
@@ -190,20 +195,19 @@ class PDF extends FPDF {
 
         $this->Ln(18); // Adjust the space after 'From Details' if necessary
     }
-    
-    
+
 
     function Footer() {
         $this->SetY(-15);
         $this->SetFont('Arial', 'B', 11);
+        $this->SetTextColor(0);
         $this->Cell(0, 10, 'Thank you for your patronage', 0, 0, 'C');
     }
-
-
 
     function generateInvoiceFromForm($formData) {
         $this->AddPage();
 
+        
 
         // Check if the user is logged in
         if (isset($_SESSION['login_username'])) {
@@ -268,20 +272,22 @@ class PDF extends FPDF {
         } else {
             echo "User is not logged in.";
         }
-        // echo "Logo Image Path: $logoImagePath<br>";
+        
         $logoImageData = file_get_contents($logoImagePath); 
         // $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
-        $fileTypeNew = pathinfo($logoImagePath, PATHINFO_EXTENSION); // Get file extension
-            	// Page header
+        $fileTypeNew = pathinfo($logoImagePath, PATHINFO_EXTENSION);           	// Page header
         $this->InHeader = true;
         $this->Header($logoImageData, $fileTypeNew, $formData);
         $this->InHeader = false;
+
         // Get data from the form
         $invoice_number = isset($formData['invoice_number']) ? $formData['invoice_number'] : '';
             $due_date = isset($formData['due_date']) ? $formData['due_date'] : '';
             $invoice_date = isset($formData['invoice_date']) ? $formData['invoice_date'] : '';
             $bill_to = isset($formData['bill_to']) ? $formData['bill_to'] : '';
             $ship_to = isset($formData['ship_to']) ? $formData['ship_to'] : '';
+            $po_number = isset($formData['po_number']) ? $formData['po_number'] : '';
+            $terms = isset($formData['terms']) ? $formData['terms'] : '';
             $invoice_currency_format = isset($formData['invoice_currency_format']) ? $formData['invoice_currency_format'] : '';
             $items = isset($formData['invoice']['items_attributes']) ? $formData['invoice']['items_attributes']: [];
         // $this->SetFont('Arial', 'B', 12);
@@ -295,14 +301,16 @@ class PDF extends FPDF {
         // $this->Cell(60, 10, 'Ship To: ' . $ship_to);
         // $this->Ln(15);
 
-        // $this->addFromDetails();
-        // // Columns for Bill To, Ship To, Invoice IDs
-        
         $this->addFromDetails($formData);
         $this->SetFont('Arial', 'B', 12);
         $this->SetTextColor(0, 0, 128);
-        $this->Cell(115, 6, 'Bill To:');
-        $this->Cell(35, 6, 'Invoice Number: ');
+        $this->Cell(63, 6, 'Bill To:');
+        if ($ship_to !== '') {
+        $this->Cell(65, 6, 'Ship To:');
+        } else {
+            $this->Cell(65, 6, ' ');
+        }
+        $this->Cell(22, 6, 'Invoice Number: ');
         $this->SetTextColor(0);
         $this->Cell(40, 6, $invoice_number, 0, 0, 'R');
         $this->Ln();
@@ -310,18 +318,21 @@ class PDF extends FPDF {
         // Example data for each column
         $column1Text = $bill_to;
 
-        $column2Text = "Invoice Date";
+        $column2Text = $ship_to;
 
-        $column3Text = $invoice_date;
+        $column3Text = "Invoice Date";
+
+        $column4Text = $invoice_date;
 
         // Set the height for each row
         $rowHeight = 10;
 
         // Set the width for each column
-        $columnWidth = 90;
+        $columnWidth = 55;
 
-        $column2Margin = 115; // Margin for the 2nd column
-        $column3Margin = 100; // Margin for the 3rd column
+        $column2Margin = 63; // Margin for the 2nd column
+        $column3Margin = 100;
+        $column4Margin = 135; // Margin for the 3rd column
 
         // Set the font and any other styling if needed
         $this->SetFont('Arial', '');
@@ -337,99 +348,211 @@ class PDF extends FPDF {
 
         // Column 2 - Move to the start position for the next cell with more left margin
         $this->SetXY($startX + $column2Margin, $startY);
-        $this->SetTextColor(0, 0, 128);
-        $this->SetFont('Arial', 'B');
-        $this->MultiCell($columnWidth, $rowHeight, $column2Text, 0, 'L');
-        $this->SetTextColor(0);
+        
+        $this->SetFont('Arial', '');
+        $this->MultiCell($columnWidth, 6, $column2Text, 0, 'L');
+        
 
         // Column 3 - Move to the start position for the next cell with less left margin
         $this->SetXY($startX + $column3Margin, $startY);
+        $this->SetTextColor(0, 0, 128);
+        $this->SetFont('Arial', 'B');
         $this->MultiCell($columnWidth, $rowHeight, $column3Text, 0, 'R');
+        $this->SetTextColor(0);
+
+        $this->SetXY($startX + $column4Margin, $startY);
+        $this->MultiCell($columnWidth, $rowHeight, $column4Text, 0, 'R');
 
 
+        // Example data for each column
+        $column9Text = "";
+
+        $column10Text = "";
+        if ($due_date !== '') {
+        $column11Text = "Due_Date";
+        } else {
+        $column11Text = "";
+        }
+        $column12Text = $due_date;
+
+        // Set the height for each row
+        $rowHeight3 = 10;
+
+        // Set the width for each column
+        $columnWidth3 = 70;
+
+        $column9Margin = 63; // Margin for the 2nd column
+        $column10Margin = 80;
+        $column11Margin = 120; // Margin for the 3rd column
+
+        // Set the font and any other styling if needed
+        $this->SetFont('Arial', '');
+
+
+
+        // Save the current X and Y positions
+        $startX = $this->GetX();
+        $startY = $this->GetY();
+
+        // Column 1
+        $this->MultiCell($columnWidth3, 6, $column9Text, 0, 'L');
+
+        // Column 2 - Move to the start position for the next cell with more left margin
+        $this->SetXY($startX + $column9Margin, $startY);
+        
+        $this->SetFont('Arial', 'B');
+        $this->MultiCell($columnWidth3, 6, $column10Text, 0, 'L');
+        
+
+        // Column 3 - Move to the start position for the next cell with less left margin
+        $this->SetXY($startX + $column10Margin, $startY);
+        $this->SetTextColor(0, 0, 128);
+        $this->MultiCell($columnWidth3, 6, $column11Text, 0, 'R');
+        $this->SetTextColor(0);
+
+        $this->SetXY($startX + $column11Margin, $startY);
+        $this->MultiCell($columnWidth3, 6, $column12Text, 0, 'R');
+
+
+         // Example data for each column
+         $column5Text = "";
+
+         $column6Text = "";
+         if ($po_number !== '') {
+         $column7Text = "PO#";
+        } else {
+        $column7Text = "";
+        }
+         $column8Text = $po_number;
+        
+         // Set the height for each row
+         $rowHeight2 = 10;
+ 
+         // Set the width for each column
+         $columnWidth2 = 70;
+ 
+         $column6Margin = 63; // Margin for the 2nd column
+         $column7Margin = 69;
+         $column8Margin = 120; // Margin for the 3rd column
+ 
+         // Set the font and any other styling if needed
+         $this->SetFont('Arial', '');
+ 
+ 
+ 
+         // Save the current X and Y positions
+         $startX = $this->GetX();
+         $startY = $this->GetY();
+ 
+         // Column 1
+         $this->MultiCell($columnWidth2, 6, $column5Text, 0, 'L');
+ 
+         // Column 2 - Move to the start position for the next cell with more left margin
+         $this->SetXY($startX + $column6Margin, $startY);
+         
+         $this->SetFont('Arial', 'B');
+         $this->MultiCell($columnWidth2, 7, $column6Text, 0, 'L');
+         
+ 
+         // Column 3 - Move to the start position for the next cell with less left margin
+         $this->SetXY($startX + $column7Margin, $startY);
+         $this->SetTextColor(0, 0, 128);
+         $this->MultiCell($columnWidth2, 8, $column7Text, 0, 'R');
+         $this->SetTextColor(0);
+ 
+         $this->SetXY($startX + $column8Margin, $startY);
+         $this->MultiCell($columnWidth2, 8, $column8Text, 0, 'R');
+
+
+          
 
         // Move to the next line
-        $this->Ln(14);
+        $this->Ln(12);
 
         $this->SetFillColor(240, 240, 240);
+        
         // Table for Quantity, Description, Unit Price, Subtotal
         $this->SetFont('Arial', 'B', 10);
-        $this->Cell(95, 10, 'Description', 1, 0, 'C', true);
-        $this->Cell(29, 10, 'Tax', 1, 0, 'C', true);
-        $this->Cell(29, 10, 'Discount', 1, 0, 'C', true);
-        $this->Cell(37, 10, 'Amount', 1, 0, 'C', true);
+        $this->Cell(18, 10, 'Quantity', 1, 0, 'C', true);
+        $this->Cell(75, 10, 'Description', 1, 0, 'C', true);
+        $this->Cell(21, 10, 'Unit Price', 1, 0, 'R', true);
+        $this->Cell(21, 10, 'Discount', 1, 0, 'R', true);
+        $this->Cell(21, 10, 'Tax', 1, 0, 'R', true);
+        $this->Cell(34, 10, 'Amount', 1, 0, 'R', true);
 
+        
         $this->Ln();
+        $startX = $this->GetX();
+        $startY = $this->GetY();
+        
+        // Set the line color (if needed)
+        $this->SetDrawColor(0); // Set the line color to black
+        
+        // Calculate the page width based on the current settings (PDF width - margins)
+        $pageWidth = $this->w - $this->lMargin - $this->rMargin;
+        
+        // Draw a line after the first row at the current Y position
+        $this->Line($startX, $startY, $startX + $pageWidth, $startY);
 
-        $this->SetTextColor(0);
+        $this->SetTextColor(0); 
         $this->SetFont('Arial', '');
         $subtotal = 0;
         foreach ($items as $item) {
-            // echo '<pre>';
-            // print_r($items);
-            // echo '</pre>';
+
+            $quantity = isset($item['quantity']) ? $item['quantity'] : '';
             $description = isset($item['description']) ? $item['description'] : '';
-            $amount = isset($item['amount']) ? $item['amount'] : '';
+            $price = isset($item['price']) ? $item['price'] : '';
             $discount = isset($item['discount']) ? $item['discount'] : '';
+            $amount = isset($item['amount']) ? $item['amount'] : '';
             $tax = isset($item['tax']) ? $item['tax'] : '';
             $tax_name = isset($item['tax_name']) ? $item['tax_name'] : '';
+
 
             $formattedTax = $tax . '%';
             $formattedDiscount = $discount . '%';
 
-            $discountAmount = ($amount * $discount) / 100;
-            $amountAfterDiscount = $amount - $discountAmount;
-            $taxAmount = ($amountAfterDiscount * $tax) / 100;
+            $discountAmount = ($price * $quantity) * ($discount / 100); // Calculating the discount amount
+            $newAmount = ($price * $quantity) - $discountAmount;
 
-            $amountNew = $amountAfterDiscount + $taxAmount;
+            $formattedNewAmount = number_format($newAmount, 2, '.', '');
 
-            $formattedNewAmount = number_format($amountNew, 2, '.', '');
-
-            $this->Cell(95, 10, $description, 1);
-            $this->Cell(29, 10, $tax_name . ' ' . $formattedTax, 1, 0, 'C');
-            $this->Cell(29, 10, $formattedDiscount, 1, 0, 'C');
-            $this->Cell(37, 10, $formattedNewAmount, 1, 0, 'R');
+            $this->Cell(18, 10, $quantity, 1, 0);
+            $this->Cell(75, 10, $description, 1, 0);
+            $this->Cell(21, 10, $price, 1, 0, 'R');
+            $this->Cell(21, 10, $formattedDiscount, 1, 0, 'R');
+            $this->Cell(21, 10, $tax_name . ' ' . $formattedTax, 1, 0, 'R');
+            $this->Cell(34, 10, $amount, 1, 0, 'R');
             $this->Ln();
             
-            $subtotal += $amountAfterDiscount + $taxAmount;
 
-            // Calculate subtotal for each items
-            // $subtotal += $amount - $discount% + $tax%;
+            $subtotal += $amount;
         }
-            // echo '<pre>';
-            // print_r($invoice_currency_format);
-            // echo '</pre>';
-        //Display Subtotal and Total
+
+        // // Display Subtotal and Total
         // $this->SetFont('Arial', 'B', 10);
-        // $this->Cell(153, 10, 'Subtotal:', 0, 0, 'R');
-        // $this->Cell(37, 10, $invoice_currency_format . $subtotal, 1, 1, 'R');
+        // $this->Cell(156, 10, 'Subtotal:', 0, 0, 'R');
+        // $this->Cell(34, 10, $invoice_currency_format . $subtotal, 1, 1, 'R');
         
         // $formattedTax = $tax . '%';
-        // $this->Cell(153, 10, $tax_name . ' ' . $formattedTax, 0, 0, 'R');
+        // $this->Cell(156, 10, $tax_name . ' ' . $formattedTax, 0, 0, 'R');
         // $tax = 0.15 * $subtotal; // Example Tax Calculation (15%)
         // $total = $subtotal + $tax;
-        // $this->Cell(37, 10, $invoice_currency_format . $tax, 1, 1, 'R');
+        // $this->Cell(34, 10, $invoice_currency_format . $tax, 1, 1, 'R');
         
         $total = $subtotal;
         $this->SetFont('Arial', 'B', 12);
-        $this->Cell(153, 10, 'Total:', 0, 0, 'R');
-        $this->SetFillColor(240, 240, 240); // Light gray color
-        $formattedTotal = number_format($total, 2, '.', '');
-        $this->Cell(37, 10, $invoice_currency_format . $formattedTotal, 1, 1, 'R', true);
+        $this->Cell(156, 10, 'Total:', 0, 0, 'R');
+        $this->SetFillColor(240, 240, 240);
 
-        // $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
-        // $fileTypeNew = pathinfo( PATHINFO_EXTENSION); // Get file extension
+        $formattedTotal = number_format($total, 2, '.', '');
+        $this->Cell(34, 10, $invoice_currency_format . $formattedTotal, 1, 1, 'R', true);
+
         $imageData = file_get_contents($imagePath); 
         // $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
         $fileType = pathinfo($imagePath, PATHINFO_EXTENSION); // Get file extension
 
-        // $imageData = isset($_FILES['image']['tmp_name']) ? file_get_contents($_FILES['image']['tmp_name']) : null;
-        // $fileType = pathinfo( PATHINFO_EXTENSION); // Get file extension
-
-        
-        // Call addSignature and pass the $imageData variable
+        // Call function to display signature
         $this->addSignature($imageData, $fileType);
-   
 
         // Call function to display terms and conditions
         $this->addTermsAndConditions($formData);
@@ -446,15 +569,14 @@ class PDF extends FPDF {
             file_put_contents($img, $imageData); // Save the image data to a file
     
             // Add the image to the PDF
-            $this->Image($img, 156, 162, 45);
+            $this->Image($img, 156, 182, 45);
     
             unlink($img); // Delete the image file after it's been used
         } else {
-
+            // Handle the case where image data is empty or not received
+            echo "No image data received for signature.";
         }
     }
-    
-
     function addTermsAndConditions($formData) {
         $terms = isset($formData['terms']) ? $formData['terms'] : '';
         $this->SetY(210); // Set Y position at the bottom of the page
@@ -477,8 +599,134 @@ class PDF extends FPDF {
 
 }
 
-    $pdf = new PDF();
+
+$pdf = new PDF();
     $pdf->generateInvoiceFromForm($_POST);
     $pdf->Output('invoice.pdf', 'D'); // 'D' parameter forces download, change to 'I' for inline display
 
 ?>
+?>
+<style>
+    /* Style for the main form */
+    .edit_invoice {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+    }
+
+    /* Style for the main form buttons */
+    .edit_invoice button {
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+
+    /* Style for the email input form */
+    #emailForm {
+        display: none;
+        background-color: #F8F8FF;
+        border: 1px solid #F8F8FF;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+
+    }
+
+    #emailForm h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    #emailForm label {
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    #recipientEmail {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    #emailForm button {
+        background-color: #FFD700;
+        color: black;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+
+    .error {
+        color: red;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    #openEmailModal {
+    display: block;
+    margin: 0 auto;
+    }
+
+    form {
+    padding: 20px; /* Adjust the value as needed */
+    }
+
+    #invoice-form {
+    padding: 50px;
+    text-align: center;
+    margin-top: 15%;
+}
+
+#invoice-form .modal-title {
+    text-align: center;
+}
+
+#emailForm {
+    padding: 20px;
+}
+
+
+</style>
+<body style="background: linear-gradient(to bottom, rgba(95, 158, 160, 0), rgba(95, 158, 160, 1));">
+    <form class="edit_invoice" id="invoice-form" action="process_invoice.php" accept-charset="UTF-8" data-remote="true" method="post">
+        <!-- Main form fields -->
+        <div class="modal-header text-center justify-content-center" style="color: black;">
+            <h4 class="modal-title fs-6 mx-auto" style="text-align: center;" id="signup-modal-label">
+                To print, download or send your invoice, <br/>you have to add a recipient email first.
+            </h4>
+        </div>
+
+        <hr>
+
+        <!-- Add the "Add Recipient Email" button -->
+        <button type="button" id="openEmailModal">Add Recipient Email</button>
+
+        <!-- Existing main form fields and HTML content -->
+
+        <!-- ... -->
+
+        <!-- Email Input Form (displayed within the same page) -->
+        <div id="emailForm" style="display: none;">
+            <h2 style="text-align: center;">Add Recipient Email</h2>
+            <form method="post">
+                <input type="email" id="recipientEmail" placeholder="your@gmail.com" name="recipientEmail" style="width: 50%;" required>
+                <button type="submit" name="submit" style="margin-top: 20px; width: 50%; text-align: center;">Send Invoice</button>
+            </form>
+        </div>
+    </form>
+
+    <script>
+    document.getElementById("openEmailModal").addEventListener("click", function () {
+        var emailForm = document.getElementById("emailForm");
+        var openEmailButton = document.getElementById("openEmailModal");
+        emailForm.style.display = "block";
+        openEmailButton.style.display = "none";
+    });
+    </script>
+</body>
