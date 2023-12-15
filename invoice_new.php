@@ -561,7 +561,7 @@
                       <input type="hidden" name="" id="invoice_currency_format" value="%s %n" required/>
                       <div class="col-6 col-md-3 text-end fs-5 fw-bold">
                         <a class="currency-formats dotted text-decoration-dotted" title="Change Currency &amp; Formatting" data-toggle="tooltip" data-placement="left" style="font-size: 1.2em;">
-                          <span id="currencySymbol">NGN</span> <span id="second_subtotal">0.00<span>
+                          <span id="currencySymbol">₹</span> <span id="second_subtotal">0.00<span>
                         </a>
                       </div>
                     </div>

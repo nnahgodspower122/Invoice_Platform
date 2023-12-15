@@ -602,7 +602,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
             </div>
 
             <?php
-            if ($active_invoice_count > 0) {
+            if ($deleted_invoice_count > 0) {
               // Check if the user is logged in
               if (isset($_SESSION['login_username'])) {
                   $username = $_SESSION['login_username']; // Get the logged-in user's username
@@ -647,6 +647,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                           
                               while ($invoice_row = $result->fetch_assoc()) {
                                   echo '<tr>';
+
+                                  $invoice_row['from_field'] = str_replace('\r', "\r", $invoice_row['from_field']);
+                                  $invoice_row['from_field'] = str_replace('\n', "\n", $invoice_row['from_field']);
+
+                                  $invoice_row['bill_to'] = str_replace('\r', "\r", $invoice_row['bill_to']);
+                                  $invoice_row['bill_to'] = str_replace('\n', "\n", $invoice_row['bill_to']);
+
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_number'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_date'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['from_field'] . '</a></td>';
