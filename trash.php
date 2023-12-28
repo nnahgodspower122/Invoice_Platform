@@ -614,11 +614,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                       die("Connection failed: " . mysqli_connect_error());
                   }
 
-                  $sql = "SELECT i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount, COUNT(*) as invoice_count
+                  $sql = "SELECT i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, 
+                  GROUP_CONCAT(it.amount) as amounts, SUM(it.amount) as total_amount,
+                  GROUP_CONCAT(it.discount) as discounts, SUM(it.discount) as total_discount,
+                  GROUP_CONCAT(it.tax) as taxes, SUM(it.tax) as total_tax,
+                  GROUP_CONCAT(it.price) as prices, SUM(it.price) as price,
+                  GROUP_CONCAT(it.form) as forms, (it.form) as form,
+                  GROUP_CONCAT(it.total) as totals, (it.total) as total,
+                  COUNT(*) as invoice_count
                   FROM invoice_data i
                   INNER JOIN invoice_data_items it ON i.id = it.invoice_id
                   WHERE i.username = ? AND i.is_deleted = 1
-                  GROUP BY i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount";
+                  GROUP BY i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms";
 
                   $stmt = $conn->prepare($sql);
 
@@ -647,6 +654,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                           
                               while ($invoice_row = $result->fetch_assoc()) {
                                   echo '<tr>';
+                                  $newAmount = $invoice_row['total'];
+                                    $amountNew = $newAmount;
 
                                   $invoice_row['from_field'] = str_replace('\r', "\r", $invoice_row['from_field']);
                                   $invoice_row['from_field'] = str_replace('\n', "\n", $invoice_row['from_field']);
@@ -658,7 +667,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_date'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['from_field'] . '</a></td>';
                                   echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['bill_to'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['amount'] . '</a></td>';
+                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $amountNew . '</a></td>';
                                   echo '<td>';
                                   echo '<form action="change_deleted_status.php" method="post">';
                                   echo '<input type="hidden" name="invoice_number" value="' . $invoice_row['invoice_number'] . '">';
@@ -668,9 +677,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                                   echo '</tr>';
                           
                                   // Accumulate the amount to calculate the total
-                                  $totalAmount += $invoice_row['amount'];
+                                 
                               }
-                          
+
                               echo '<br><br>';
                               echo '</tbody>';
                               

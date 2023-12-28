@@ -46,6 +46,7 @@
                         $tax = $row['tax'];
                         $tax_name = $row['tax_name'];
                         $quantity = $row['quantity'];
+                        $total = $row['total'];
                         $invoice_currency_format = $row['invoice_currency_format'];
 
                         // Display the invoice data in your HTML
@@ -347,7 +348,7 @@
 
 
                     <h1 class="fs-2 overdue my-3">
-                        This invoice of <?php echo htmlspecialchars($amount); ?> was due on <?php echo htmlspecialchars($due_date); ?>
+                        This invoice of <?php echo htmlspecialchars($total); ?> was due on <?php echo htmlspecialchars($due_date); ?>
                     </h1>
 
                     <form action="payment_form.php" method="post">
