@@ -4,151 +4,103 @@ session_start(); // Start the session
 // Check if the user is logged in
 if (isset($_SESSION['login_username'])) {
     $username = $_SESSION['login_username']; // Get the logged-in user's username
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+   if (isset($_POST['save_and_download'])) {
+        // Connect to your database
+        $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
 
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        if (isset($_POST['save_and_download'])) {
-            // Connect to your database
-            $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
+        if (!$conn) {
+            die("Connection failed: " . mysqli_connect_error());
+        }
 
-            if (!$conn) {
-                die("Connection failed: " . mysqli_connect_error());
-            }
+        $logoImageData = file_get_contents($_FILES['logo_image']['tmp_name']);
+        $logoImagePath = "upload/" . $_FILES['logo_image']['name'];
+        move_uploaded_file($_FILES['logo_image']['tmp_name'], $logoImagePath);
+        // move_uploaded_file($logoImageData, $logoImagePath);
 
-            $invoice_number = mysqli_real_escape_string($conn, $_POST['invoice_number']);
-            
-            // Check if records already exist for the user and invoice id
-            $checkExistingSql = "SELECT image_path, logo_image_path FROM invoice_data WHERE username = ? AND invoice_number = ?";
-            $checkExistingStmt = $conn->prepare($checkExistingSql);
-            
-            if ($checkExistingStmt) {
-                $checkExistingStmt->bind_param("ss", $username, $invoice_number);
-            
-                if ($checkExistingStmt->execute()) {
-                    $result = $checkExistingStmt->get_result();
-            
-                    if ($result->num_rows > 0) {
-                        // Records already exist, retrieve existing paths and assign them to new variables
-                        list($existingImagePath, $existingLogoImagePath) = $result->fetch_row();
-            
-                        // Now you can use $existingImagePath and $existingLogoImagePath as needed
-                        echo "";
-                    } else {
-                        echo "does not exist";
-                    }
-                } else {
-                    // Handle the error
-                    echo "Error: " . $checkExistingStmt->error;
-                }
-            
-                $checkExistingStmt->close();
-            } else {
-                // Handle the error in preparing the statement
-                echo "Error in preparing the statement: " . $conn->error;
-            }
+        // Get the image data and move it to the 'upload' folder
+        $imageData = file_get_contents($_FILES['image']['tmp_name']);
+        $imagePath = "upload/" . $_FILES['image']['name'];
+        move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
 
-            // Get the logo_image data and move it to the 'upload' folder
-            $logoImageData = $existingLogoImagePath;
-            $logoImagePath = $existingLogoImagePath;
-            move_uploaded_file($logoImageData, $logoImagePath);
+        // Retrieve form data
+        $from = $_POST['from'];
+        $bill_to = $_POST['bill_to'];
+        $ship_to = $_POST['ship_to'];
+        $po_number = $_POST['po_number'];
+        $due_date = $_POST['due_date'];
+        $invoice_number = $_POST['invoice_number'];
+        $invoice_date = $_POST['invoice_date'];
+        $terms = $_POST['terms'];
+        $invoice_currency_format = mysqli_real_escape_string($conn, $_POST['invoice_currency_format']);
 
-            // Get the image data and move it to the 'upload' folder
-            $imageData = $existingImagePath;
-            $imagePath = $existingImagePath;
-            move_uploaded_file($imageData, $imagePath);
+        // Insert invoice details into the 'invoices' table
+        $sql = "INSERT INTO invoice_data (username, from_field, bill_to, ship_to, po_number, due_date, invoice_number, invoice_date, terms, invoice_currency_format, image_path, logo_image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
 
-            // Retrieve form data
-            $from = $_POST['from'];
-            $bill_to = $_POST['bill_to'];
-            $ship_to = $_POST['ship_to'];
-            $po_number = $_POST['po_number'];
-            $due_date = $_POST['due_date'];
-            $invoice_number = $_POST['invoice_number'];
-            $invoice_date = $_POST['invoice_date'];
-            $terms = $_POST['terms'];
-            $invoice_currency_format = mysqli_real_escape_string($conn, $_POST['invoice_currency_format']);
+        if ($stmt) {
+            $stmt->bind_param("ssssssssssss", $username, $from, $bill_to, $ship_to, $po_number, $due_date, $invoice_number, $invoice_date, $terms, $invoice_currency_format, $imagePath, $logoImagePath);
 
-            // Check if the invoice number already exists
-            $check_sql = "SELECT * FROM invoice_data WHERE username = ? AND invoice_number = ?";
-            $check_stmt = $conn->prepare($check_sql);
-            $check_stmt->bind_param("ss", $username, $invoice_number);
-            $check_stmt->execute();
-            $result = $check_stmt->get_result();
+            if ($stmt->execute()) {
+                // Invoice data inserted successfully
+                $invoice_id = $stmt->insert_id; // Get the ID of the inserted invoice
+                $stmt->close();
 
-            if ($result->num_rows > 0) {
-                // Update existing record
-                $update_sql = "UPDATE invoice_data SET from_field = ?, bill_to = ?, ship_to = ?, po_number = ?, due_date = ?, invoice_date = ?, terms = ?, invoice_currency_format = ? WHERE username = ? AND invoice_number = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ssssssssss", $from, $bill_to, $ship_to, $po_number, $due_date, $invoice_date, $terms, $invoice_currency_format, $username, $invoice_number);
+                // Accessing items
+                $items = $_POST['invoice']['items_attributes'];
+                foreach ($items as $item) {
+                    $quantity = $item['quantity'];
+                    $description = $item['description'];
+                    $price = $item['price'];
+                    $amount = $item['amount'];
+                    $discount = $item['discount'];
+                    $tax = $item['tax'];
+                    $tax_name = mysqli_real_escape_string($conn, $item['tax_name']);
+                    $form = $item['form'];
+                    $total = mysqli_real_escape_string($conn, $item['total']);
+                            
+                    // Insert item details into the 'invoice_items' table, associating them with the invoice
+                    $sql = "INSERT INTO invoice_data_items (invoice_id, quantity, description, price, amount, discount, tax, tax_name, form, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt = $conn->prepare($sql);
 
-                if ($update_stmt->execute()) {
-                    // Invoice data updated successfully
-                    $invoice_id = $result->fetch_assoc()['id'];
-                    $update_stmt->close();
+                    if ($stmt) {
+                        $stmt->bind_param("dsssssssss", $invoice_id, $quantity, $description, $price, $amount, $discount, $tax, $tax_name, $form, $total);
 
-                    // Accessing items
-                    $items = $_POST['invoice']['items_attributes'];
-                    foreach ($items as $item) {
-                        $quantity = mysqli_real_escape_string($conn, $item['quantity']);
-                        $description = mysqli_real_escape_string($conn, $item['description']);
-                        $price = mysqli_real_escape_string($conn, $item['price']);
-                        $amount = mysqli_real_escape_string($conn, $item['amount']);
-                        $discount = mysqli_real_escape_string($conn, $item['discount']);
-                        $tax = mysqli_real_escape_string($conn, $item['tax']);
-                        $tax_name = mysqli_real_escape_string($conn, $item['tax_name']);
-                        $total = mysqli_real_escape_string($conn, $item['total']);
-
-                        // Check if the combination of invoice_id and description already exists in invoice_data_items
-                        $check_combination_sql = "SELECT id FROM invoice_data_items WHERE invoice_id = ? AND description = ?";
-                        $check_combination_stmt = $conn->prepare($check_combination_sql);
-                        $check_combination_stmt->bind_param("is", $invoice_id, $description);
-                        $check_combination_stmt->execute();
-                        $check_combination_stmt->store_result();
-
-                        if ($check_combination_stmt->num_rows > 0) {
-                            // The combination already exists, perform an UPDATE
-                            $item_sql = "UPDATE invoice_data_items 
-                                        SET quantity = ?, price = ?, amount = ?, discount = ?, tax = ?, tax_name = ?, total = ? 
-                                        WHERE invoice_id = ? AND description = ?";
-                            $item_stmt = $conn->prepare($item_sql);
-                            $item_stmt->bind_param("sssssssis", $quantity, $price, $amount, $discount, $tax, $tax_name, $total, $invoice_id, $description);
+                        if ($stmt->execute()) {
+                            // Item data inserted successfully
+                            echo "";
                         } else {
-                            // The combination doesn't exist, perform an INSERT
-                            $item_sql = "INSERT INTO invoice_data_items (invoice_id, quantity, description, price, amount, discount, tax, tax_name, total) 
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                            $item_stmt = $conn->prepare($item_sql);
-                            $item_stmt->bind_param("issssssss", $invoice_id, $quantity, $description, $price, $amount, $discount, $tax, $tax_name, $total);
+                            // Handle the error
+                            echo "Error: " . $stmt->error;
                         }
 
-                        // Execute the statement
-                        $item_stmt->execute();
-
-                        // Close the statement
-                        $item_stmt->close();
-
-
-
+                        $stmt->close();
+                    } else {
+                        // Handle the error in preparing the statement
+                        echo "Error in preparing the statement: " . $conn->error;
                     }
-                } else {
-                    // Handle the error
-                    echo "Error updating record: " . $update_stmt->error;
                 }
             } else {
-                // Handle the error in preparing the statement
-                echo "Record not found";
+                // Handle the error
+                echo "Error: " . $stmt->error;
             }
-            header("Location: edit_advance_invoice.php?invoice_number=" . urlencode($invoice_number));
-            exit();
-            // Close the database connection
-            $conn->close();
+        } else {
+            // Handle the error in preparing the statement
+            echo "Error in preparing the statement: " . $conn->error;
         }
-    } elseif (isset($_POST['download'])) {
-        echo "good";
+
+        // Close the database connection
+        $conn->close();
+    }
+    } elseif (isset($_POST['email_button'])) { 
+
+        echo "<script>window.location.href = 'mailer.php';</script>";
+
     } else {
         echo "User is not logged in.";
     }
+
 }
-
-
 
 require('includes/fpdf/fpdf.php');
 
@@ -172,7 +124,7 @@ class PDF extends FPDF {
         // Add your invoice title
         $this->SetFont('Arial', 'B', 18);
         $this->SetTextColor(0, 0, 128);
-        $this->Cell(0, 5, 'Invoice', 0, 0, 'R');
+        $this->Cell(0, 5, 'Quote', 0, 0, 'R');
         $this->Ln(1);
         $from = isset($formData['from']) ? $formData['from'] : '';
         $this->addFromDetails($from);
@@ -217,76 +169,12 @@ class PDF extends FPDF {
 
     function generateInvoiceFromForm($formData) {
         $this->AddPage();
-
+        $logoImagePath = "upload/" . $_FILES['logo_image']['name'];
+        move_uploaded_file($_FILES['logo_image']['tmp_name'], $logoImagePath);
         
-
-        // Check if the user is logged in
-        if (isset($_SESSION['login_username'])) {
-            $username = $_SESSION['login_username']; // Get the logged-in user's username
-        
-            // Connect to your database
-            $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
-        
-            if (!$conn) {
-                die("Connection failed: " . mysqli_connect_error());
-            }
-            $invoice_number = mysqli_real_escape_string($conn, $_POST['invoice_number']);
-            // Check if 'invoice_number' is set in the URL
-            if (isset($_POST['invoice_number'])) {
-                $invoice_number = $_POST['invoice_number'];
-        
-                // Retrieve invoice details from the database based on username and invoice_number
-        $sql = "SELECT * FROM invoice_data WHERE username = ? AND invoice_number = ?";
-        $stmt = $conn->prepare($sql);
-        
-        if ($stmt) {
-            $stmt->bind_param("ss", $username, $invoice_number);
-        
-            if ($stmt->execute()) {
-                $result = $stmt->get_result();
-        
-                if ($result->num_rows > 0) {
-                    // Fetch the data
-                    $row = $result->fetch_assoc();
-        
-        
-                    // Retrieve image paths
-                    $imagePath = $row['image_path'];
-                    $logoImagePath = $row['logo_image_path'];
-        
-                    // Debugging: Display the image paths
-                    // echo "Image Path: $imagePath<br>";
-                    // echo "Logo Image Path: $logoImagePath<br>";
-        
-                    // Display the images
-        
-                } else {
-                    echo "Invoice not found.";
-                }
-            } else {
-                // Handle the error
-                echo "Error executing the query: " . $stmt->error;
-            }
-        
-            $stmt->close();
-        } else {
-            // Handle the error in preparing the statement
-            echo "Error preparing the statement: " . $conn->error;
-        }
-        
-        
-                // Close the database connection
-                $conn->close();
-            } else {
-                echo "Invoice number not set in the URL.";
-            }
-        } else {
-            echo "User is not logged in.";
-        }
-        
-        $logoImageData = file_get_contents($logoImagePath); 
-        // $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
-        $fileTypeNew = pathinfo($logoImagePath, PATHINFO_EXTENSION);           	// Page header
+        $logoImageData = file_get_contents($logoImagePath);  
+        $fileTypeNew = pathinfo($_FILES['logo_image']['name'], PATHINFO_EXTENSION); // Get file extension
+            	// Page header
         $this->InHeader = true;
         $this->Header($logoImageData, $fileTypeNew, $formData);
         $this->InHeader = false;
@@ -321,7 +209,7 @@ class PDF extends FPDF {
         } else {
             $this->Cell(65, 6, ' ');
         }
-        $this->Cell(22, 6, 'Invoice Number: ');
+        $this->Cell(22, 6, 'Quote Number: ');
         $this->SetTextColor(0);
         $this->Cell(40, 6, $invoice_number, 0, 0, 'R');
         $this->Ln();
@@ -331,7 +219,7 @@ class PDF extends FPDF {
 
         $column2Text = $ship_to;
 
-        $column3Text = "Invoice Date";
+        $column3Text = "Quote Date";
 
         $column4Text = $invoice_date;
 
@@ -342,7 +230,7 @@ class PDF extends FPDF {
         $columnWidth = 55;
 
         $column2Margin = 63; // Margin for the 2nd column
-        $column3Margin = 100;
+        $column3Margin = 98;
         $column4Margin = 135; // Margin for the 3rd column
 
         // Set the font and any other styling if needed
@@ -401,28 +289,28 @@ class PDF extends FPDF {
 
 
 
-        // Save the current X and Y positions
-        $startX = $this->GetX();
-        $startY = $this->GetY();
+        // // Save the current X and Y positions
+        // $startX = $this->GetX();
+        // $startY = $this->GetY();
 
-        // Column 1
-        $this->MultiCell($columnWidth3, 6, $column9Text, 0, 'L');
+        // // Column 1
+        // $this->MultiCell($columnWidth3, 6, $column9Text, 0, 'L');
 
-        // Column 2 - Move to the start position for the next cell with more left margin
-        $this->SetXY($startX + $column9Margin, $startY);
+        // // Column 2 - Move to the start position for the next cell with more left margin
+        // $this->SetXY($startX + $column9Margin, $startY);
         
-        $this->SetFont('Arial', 'B');
-        $this->MultiCell($columnWidth3, 6, $column10Text, 0, 'L');
+        // $this->SetFont('Arial', 'B');
+        // $this->MultiCell($columnWidth3, 6, $column10Text, 0, 'L');
         
 
-        // Column 3 - Move to the start position for the next cell with less left margin
-        $this->SetXY($startX + $column10Margin, $startY);
-        $this->SetTextColor(0, 0, 128);
-        $this->MultiCell($columnWidth3, 6, $column11Text, 0, 'R');
-        $this->SetTextColor(0);
+        // // Column 3 - Move to the start position for the next cell with less left margin
+        // $this->SetXY($startX + $column10Margin, $startY);
+        // $this->SetTextColor(0, 0, 128);
+        // $this->MultiCell($columnWidth3, 6, $column11Text, 0, 'R');
+        // $this->SetTextColor(0);
 
-        $this->SetXY($startX + $column11Margin, $startY);
-        $this->MultiCell($columnWidth3, 6, $column12Text, 0, 'R');
+        // $this->SetXY($startX + $column11Margin, $startY);
+        // $this->MultiCell($columnWidth3, 6, $column12Text, 0, 'R');
 
 
          // Example data for each column
@@ -558,9 +446,11 @@ class PDF extends FPDF {
         $formattedTotal = number_format($total, 2, '.', '');
         $this->Cell(34, 10, $invoice_currency_format . $formattedTotal, 1, 1, 'R', true);
 
-        $imageData = file_get_contents($imagePath); 
-        // $logoImageData = isset($_FILES['logo_image']['tmp_name']) ? file_get_contents($_FILES['logo_image']['tmp_name']) : null;
-        $fileType = pathinfo($imagePath, PATHINFO_EXTENSION); // Get file extension
+        $imagePath = "upload/" . $_FILES['image']['name'];
+        move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
+        
+        $imageData = file_get_contents($imagePath);  
+        $fileType = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION); // Get file extension
 
         // Call function to display signature
         $this->addSignature($imageData, $fileType);

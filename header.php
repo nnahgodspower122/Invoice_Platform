@@ -556,7 +556,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                 <span class="mx-1">·</span>
                 <span id='switch-to-cash-receipt' class="acts-as-link ">Cash Receipt</span>
                 <br>
-                <span id='switch-to-quote' class="acts-as-link ">Quote</span>
+                <a id='switch-to-quote' href="quote.php" class="acts-as-link ">Quote</a>
                 <span class="mx-1">·</span>
                 <span id='switch-to-estimate' class="acts-as-link ">Estimate</span>
                 <span class="mx-1">·</span>
@@ -662,8 +662,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
         }
 
         // Query to get the total amount for records with "paid" status
-        $totalAmountPaidSql = "SELECT SUM(amount) AS total_amount_paid FROM invoice_data_items WHERE invoice_id IN (SELECT id FROM invoice_data WHERE username = ? AND statuses = 'paid')";
-        $totalAmountPaidStmt = $conn->prepare($totalAmountPaidSql);
+        // $totalAmountPaidSql = "SELECT SUM(amount) AS total_amount_paid FROM invoice_data_items WHERE invoice_id IN (SELECT id FROM invoice_data WHERE username = ? AND statuses = 'paid')";
+        
+        $totalAmountPaidSQL = "SELECT
+        COALESCE(SUM(amount), 0) AS total_amount,
+        COALESCE(SUM(discount), 0) AS total_discount,
+        COALESCE(SUM(tax), 0) AS total_tax,
+        COALESCE(SUM(price), 0) AS price,
+        COALESCE(SUM(total), 0) AS total
+        FROM
+        invoice_data_items
+        WHERE
+        invoice_id IN (
+            SELECT id
+            FROM invoice_data
+            WHERE username = ? AND is_deleted = 0 AND statuses = 'paid'
+        )";
+        
+        $totalAmountPaidStmt = $conn->prepare($totalAmountPaidSQL);
 
         if ($totalAmountPaidStmt) {
             $totalAmountPaidStmt->bind_param("s", $username);
@@ -671,10 +687,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
             if ($totalAmountPaidStmt->execute()) {
                 $totalAmountPaidResult = $totalAmountPaidStmt->get_result();
                 $totalAmountPaidRow = $totalAmountPaidResult->fetch_assoc();
-                $totalAmountPaid = $totalAmountPaidRow['total_amount_paid'];
 
-                // Display the total amount paid in your HTML
-                
+                  $pendingBalance = 0;
+                  $totalAmountPaid = $totalAmountPaidRow['total'];
+      
+                  $pendingBalance += $totalAmountPaid;
+                  
+              
+
+                // $totalAmountPaid = $totalAmountPaidRow['total_amount'];
+                // $totalDiscount1 = $totalAmountPaidRow['total_discount'];
+                // $totalTax1 = $totalAmountPaidRow['total_tax'];
+
+                // $discountAmount1 = ($totalAmountPaid * $totalDiscount1) / 100;
+                // $amountAfterDiscount1 = $totalAmountPaid - $discountAmount1;
+                // $taxAmount1 = ($amountAfterDiscount1 * $totalTax1) / 100;
+
+                // $pendingBalance = $amountAfterDiscount1 + $taxAmount1;
+
+
+                // // Display the total amount paid in your HTML
+                // echo $pendingBalance;
+               
+              
             } else {
                 // Handle the error
                 echo "Error: " . $totalAmountPaidStmt->error;
@@ -712,13 +747,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                       die("Connection failed: " . mysqli_connect_error());
                   }
 
-                 // Query to fetch invoice data associated with the logged-in user
-                  $sql = "SELECT i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount, COUNT(*) as invoice_count
+                  $sql = "SELECT i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, 
+                  GROUP_CONCAT(it.amount) as amounts, SUM(it.amount) as total_amount,
+                  GROUP_CONCAT(it.discount) as discounts, SUM(it.discount) as total_discount,
+                  GROUP_CONCAT(it.tax) as taxes, SUM(it.tax) as total_tax,
+                  GROUP_CONCAT(it.price) as prices, SUM(it.price) as price,
+                  GROUP_CONCAT(it.form) as forms, (it.form) as form,
+                  GROUP_CONCAT(it.total) as totals, (it.total) as total,
+                  COUNT(*) as invoice_count
                   FROM invoice_data i
                   INNER JOIN invoice_data_items it ON i.id = it.invoice_id
                   WHERE i.username = ? AND i.is_deleted = 0
-                  GROUP BY i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms, it.amount;
-                  ";
+                  GROUP BY i.invoice_number, i.invoice_date, i.from_field, i.bill_to, i.terms";
+
 
 
                   $stmt = $conn->prepare($sql);
@@ -744,27 +785,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                               echo '</thead>';
                               echo '<tbody>';
                           
+                              $total = 0;
                               $totalAmount = 0; // Initialize total amount
+                              $totalAmountNew = 0;
                               
                               while ($invoice_row = $result->fetch_assoc()) {
                                   echo '<tr>';
+                                
+                             
+                                    // Handle the case where 'price' is present
+                                    $newAmount = $invoice_row['total'];
+                                    $amountNew = $newAmount;
+ 
+                                 
+
                                   $invoice_row['from_field'] = str_replace('\r', "\r", $invoice_row['from_field']);
                                   $invoice_row['from_field'] = str_replace('\n', "\n", $invoice_row['from_field']);
 
                                   $invoice_row['bill_to'] = str_replace('\r', "\r", $invoice_row['bill_to']);
                                   $invoice_row['bill_to'] = str_replace('\n', "\n", $invoice_row['bill_to']);
 
-                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_number'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['invoice_date'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['from_field'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['bill_to'] . '</a></td>';
-                                  echo '<td><a href="edit_invoice.php?invoice_number=' . $invoice_row['invoice_number'] . '">' . $invoice_row['amount'] . '</a></td>';
+                                  if ($invoice_row['form'] == 'basic') {
+                                    $redirectUrl = "edit_invoice.php?invoice_number={$invoice_row['invoice_number']}";
+                                  } elseif ($invoice_row['form'] == 'advanced') {
+                                      $redirectUrl = "edit_advance_invoice.php?invoice_number={$invoice_row['invoice_number']}";
+                                  } else {
+                                      $redirectUrl = "default_invoice_edit.php?invoice_number={$invoice_row['invoice_number']}";
+                                  }
+
+
+                                  echo '<td><a href="' . $redirectUrl . '">' . $invoice_row['invoice_number'] . '</a></td>';
+                                  echo '<td><a href="' . $redirectUrl . '">' . $invoice_row['invoice_date'] . '</a></td>';
+                                  echo '<td><a href="' . $redirectUrl . '">' . $invoice_row['from_field'] . '</a></td>';
+                                  echo '<td><a href="' . $redirectUrl . '">' . $invoice_row['bill_to'] . '</a></td>';
+                                  echo '<td><a href="' . $redirectUrl . '">' . $amountNew . '</a></td>';
                                   echo '</tr>';
-                          
-                                  // Accumulate the amount to calculate the total
-                                  $totalAmount += $invoice_row['amount'];
+
+                                  $amountNew;
+
+                                  $totalAmount += $amountNew;
+                                  
                               }
-                          
+                              $balance = $totalAmount - $pendingBalance;
+
+
                               echo '<br><br>';
                               echo '</tbody>';
                               echo '<tfoot>';
@@ -774,11 +838,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['q']) && isset($_SESSION
                               echo '</tr>';
                               echo '<tr>';
                               echo '<td colspan="4"><a class="" href="#">Paid Amount</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmountPaid, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($pendingBalance, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
                               echo '</tr>';
                               echo '<tr>';
                               echo '<td colspan="4"><a class="" href="#">Balance Due</a></td>';
-                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($totalAmount, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
+                              echo '<td class="text-end"><a class="nolink" href="#">' . number_format($balance, 2) . htmlspecialchars($invoice_currency_format) . '<br/></a></td>';
                               echo '</tr>';
                               echo '</tfoot>';
                               echo '</table>';

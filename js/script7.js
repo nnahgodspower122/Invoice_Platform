@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const itemsContainer = document.getElementById('items');
     const subtotalDisplay = document.getElementById('subtotal');
     const secondSubtotalDisplay = document.getElementById('second_subtotal');
+    const thirdSubtotalDisplay = document.getElementById('third_subtotal');
+
   
     // Function to calculate the subtotal for a given item row
     function calculateItemSubtotal(itemRow) {
@@ -37,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const formattedSubtotal = totalSubtotal.toFixed(2);
       subtotalDisplay.textContent = formattedSubtotal;
       secondSubtotalDisplay.textContent = formattedSubtotal;
+      thirdSubtotalDisplay.value = formattedSubtotal;
     }
   
     function listenAllInputs() {
@@ -46,36 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   
-    // // Function to add a new item row
-    // function addNewItem() {
-    //   const newItemRow = document.querySelector('#row_item_212952714').cloneNode(true);
-  
-    //   // Clear values
-    //   newItemRow.querySelectorAll('input').forEach(input => {
-    //     input.value = '0.00';
-    //   });
-  
-    //   newItemRow.querySelectorAll('.add_tax').forEach(button => {
-    //     button.textContent = 'Add Tax';
-    //   });
-  
-    //   // Clear values
-    //   newItemRow.querySelectorAll('#taxName').forEach(input => {
-    //     input.value = '';
-    //   });
-  
-    //   // Add event listener for the "Cancel" button
-    //   newItemRow.querySelector('.remove_fields').addEventListener('click', function () {
-    //     itemsContainer.removeChild(newItemRow);
-    //     updateSubtotal();
-    //   });
-  
-    //   itemsContainer.appendChild(newItemRow);
-  
-    //   listenAllInputs();
-  
-    //   updateSubtotal();
-    // }
   
     function addNewItem() {
       const templateRow = document.querySelector('#row_item_212952716');
@@ -92,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   
       inputs.forEach(input => {
-        input.value = '0.00';
+        input.value = '';
       });
   
       newItemRow.querySelectorAll('.add_tax').forEach(button => {

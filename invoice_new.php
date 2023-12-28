@@ -295,7 +295,7 @@
                 <span class="mx-1">·</span>
                 <span id='switch-to-cash-receipt' class="acts-as-link ">Cash Receipt</span>
                 <br>
-                <span id='switch-to-quote' class="acts-as-link ">Quote</span>
+                <a id='switch-to-quote' href="quote.php" class="acts-as-link ">Quote</a>
                 <span class="mx-1">·</span>
                 <span id='switch-to-estimate' class="acts-as-link ">Estimate</span>
                 <span class="mx-1">·</span>
@@ -342,7 +342,7 @@
                                   <br>
                                   Logo Gallery
                               </label>
-                              <input type="file" name="logo_image" id="signatureLogoInput1" style="display: none;" accept="image/*" required>
+                              <input type="file" name="logo_image" id="signatureLogoInput1" style="display: none;" accept="image/*">
                               <img id="uploadedImage1" style="display: none;" width="100" height="100" style="display: none; margin-left: 30px;; text-align: center;">
 
                           </button>
@@ -458,16 +458,19 @@
                       <div class="col-5">
                           <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="Description" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"></textarea>
                       </div>
-
+                      
+                          <input class="form-control form description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="hidden" value="basic" name="invoice[items_attributes][0][form]" id="invoice_items_attributes_0_forms" />
+                      
                       <div class="col-2">
                           <input class="form-control amount description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][amount]" id="invoice_items_attributes_0_amount" />
                       </div>
+                      <input  type="hidden"  name="invoice[items_attributes][0][total]" value="" id="third_subtotal" required/>
 
                       <div class="col-2">
                           <input class="form-control discount description form-control-sm" placeholder="Discount" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][discount]" id="invoice_items_attributes_0_discount" />
                       </div>
 
-                        <div class="col-2">
+                      <div class="col-2">
                             <button type="button" onclick="openPopup(event)" class="add_tax btn btn-success form-control description form-control-sm" tabindex="212952714">Add Tax</button>
                         </div>
 
@@ -496,24 +499,27 @@
                           }
 
                           function addTax(event) {
+                            // Prevent the default form submission
+                            event.preventDefault();
+
                             var taxName = event.target.parentNode.querySelector("#taxName").value;
                             var taxRate = event.target.parentNode.querySelector("#invoice_items_attributes_0_tax").value;
 
                             if (taxName && taxRate) {
-                              // Remove any non-numeric characters from the entered tax rate
-                              taxRate = taxRate.replace(/[^0-9.]/g, '');
+                                // Remove any non-numeric characters from the entered tax rate
+                                taxRate = taxRate.replace(/[^0-9.]/g, '');
 
-                              // Append the percentage sign to the tax rate
-                              var taxRateWithPercentage = taxRate + "%";
+                                // Append the percentage sign to the tax rate
+                                var taxRateWithPercentage = taxRate + "%";
 
-                              // Replace the "Add Tax" button with the entered tax rate value
-                              var addButton = event.target.parentNode.parentNode.parentNode.querySelector(".add_tax");
-                              addButton.textContent = taxRateWithPercentage;
+                                // Replace the "Add Tax" button with the entered tax rate value
+                                var addButton = event.target.parentNode.parentNode.parentNode.querySelector(".add_tax");
+                                addButton.textContent = taxRateWithPercentage;
 
-                              // Close the popup
-                              closePopup(event);
+                                // Close the popup
+                                closePopup(event);
                             }
-                          }
+                        }
 
                           // // Wait for the DOM to be fully loaded before binding the event
                           // document.addEventListener("DOMContentLoaded", function () {
@@ -522,7 +528,7 @@
                           //   addButton.addEventListener("click", openPopup);
                           // });
                         </script>
-
+                        
                       <div class="col-1">
                           <input type="hidden" name="invoice[items_attributes][0][_destroy]" id="invoice_items_attributes_0__destroy" value="false" autocomplete="off" />
                           <button type="button" class="remove_fields btn btn-danger form-control description form-control-sm" tabindex="212952714">x</button>
@@ -561,15 +567,18 @@
                       <input type="hidden" name="" id="invoice_currency_format" value="%s %n" required/>
                       <div class="col-6 col-md-3 text-end fs-5 fw-bold">
                         <a class="currency-formats dotted text-decoration-dotted" title="Change Currency &amp; Formatting" data-toggle="tooltip" data-placement="left" style="font-size: 1.2em;">
-                          <span id="currencySymbol">₹</span> <span id="second_subtotal">0.00<span>
+                          <span id="currencySymbol">₹</span> <span id="second_subtotal"></span>
+
                         </a>
+                        
+</script>
                       </div>
                     </div>
                 </div>
                 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                 
 
-
+                
                 
                 <div class="row">
                   <div class="col-8">
@@ -588,7 +597,7 @@
                         
                         <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
                             <label for="signatureLogoInput" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">Add your Signature</label>
-                            <input type="file" name="image" id="signatureLogoInput" accept="image/*" style="display: none;" onchange="displayImage(this)" required>
+                            <input type="file" name="image" id="signatureLogoInput" accept="image/*" style="display: none;" onchange="displayImage(this)">
                         </button>
                         <div id="imagePreview"></div>
 
@@ -690,17 +699,6 @@
       <img alt="Invoice Template En Classic White" class="shadow img-fluid p-0" title="Invoice Template En Classic White" src="https://templates.invoicehome.com/invoice-template-en-classic-white-750px.png" width="20%" height="20%" />
     </a>
   </div>
-
-  <script>
-function validateForm() {
-    var fileInput = document.getElementById('signatureLogoInput');
-    if (fileInput.files.length === 0) {
-        alert("Please upload an image");
-        return false; // Prevent form submission
-    }
-    return true; // Allow form submission
-}
-</script>
 
 
   <div class="row text-center" style="margin-top: 20px;">

@@ -1,8 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const addItemButton = document.getElementById('add_item')
-  const itemsContainer = document.getElementById('items')
-  const subtotalDisplay = document.getElementById('subtotal')
-  const secondSubtotalDisplay = document.getElementById('second_subtotal')
+  const addItemButton = document.getElementById('add_item');
+  const itemsContainer = document.getElementById('items');
+  const subtotalDisplay = document.getElementById('subtotal');
+  const secondSubtotalDisplay = document.getElementById('second_subtotal');
+  const thirdSubtotalDisplay = document.getElementById('third_subtotal'); // Add this line
+
 
   // Function to calculate the subtotal for a given item row
   function calculateItemSubtotal(itemRow) {
@@ -22,17 +24,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Function to update the overall subtotal
   function updateSubtotal() {
-    const itemRows = itemsContainer.querySelectorAll('.row')
-    let totalSubtotal = 0
-
+    const itemRows = itemsContainer.querySelectorAll('.row');
+    let totalSubtotal = 0;
+  
     itemRows.forEach(itemRow => {
-      totalSubtotal += calculateItemSubtotal(itemRow)
-    })
-
-    const formattedSubtotal = totalSubtotal.toFixed(2)
-    subtotalDisplay.textContent = formattedSubtotal
-    secondSubtotalDisplay.textContent = formattedSubtotal
+      totalSubtotal += calculateItemSubtotal(itemRow);
+    });
+  
+    const formattedSubtotal = totalSubtotal.toFixed(2);
+    subtotalDisplay.textContent = formattedSubtotal;
+    secondSubtotalDisplay.textContent = formattedSubtotal;
+    thirdSubtotalDisplay.textContent = formattedSubtotal;
+  
+    // Update the value of the second_subtotal input field
+    document.getElementById('second_subtotal').value = formattedSubtotal;
+  
+    // Update the value of the third_subtotal input field
+    document.getElementById('third_subtotal').value = formattedSubtotal;
   }
+  
+  
 
   function listenAllInputs() {
     itemsContainer.querySelectorAll('input').forEach(input => {
@@ -52,10 +63,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const currentName = input.name;
       if (currentName) {
         input.name = currentName.replace('[0]', `[${itemIndex}]`);
-        input.id = `${input.id}_${itemIndex}`;
+        // input.id = `${input.id}_${itemIndex}`;
       }
-      input.value = '0.00';
+      input.value = '';
     });
+    
 
     newItemRow.querySelectorAll('.add_tax').forEach(button => {
       button.textContent = 'Add Tax';
@@ -576,11 +588,6 @@ $(document).ready(function () {
 })
 
 // JavaScript to handle file selection and update the button content
-
-function openFileInput() {
-  // Trigger the file input element when the button is clicked
-  document.getElementById('signatureLogoInput').click()
-}
 
 // Function to handle file selection and update the button content
 function handleFileSelect(event) {

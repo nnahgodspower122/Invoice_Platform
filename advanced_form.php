@@ -307,7 +307,7 @@
                 <span class="mx-1">·</span>
                 <span id='switch-to-cash-receipt' class="acts-as-link ">Cash Receipt</span>
                 <br>
-                <span id='switch-to-quote' class="acts-as-link ">Quote</span>
+                <a id='switch-to-quote' href="quote.php" class="acts-as-link ">Quote</a>
                 <span class="mx-1">·</span>
                 <span id='switch-to-estimate' class="acts-as-link ">Estimate</span>
                 <span class="mx-1">·</span>
@@ -504,9 +504,9 @@
                         Tax
                     </div>
 
-			        <div class="col-1"></div>
-                    
-                </div>
+                    <div class="col-1"></div>
+                          
+                    </div>
 
                 <div id="items">
                   <input type="hidden" name="invoice[items_attributes][0][id]" id="invoice_items_attributes_0_id" value="212952714" autocomplete="off" />
@@ -514,7 +514,10 @@
                   <div class="row mb-3" id='row_item_212952716'>
                         <div class="col-1 form-group">
                             <input type="text" name="invoice[items_attributes][0][quantity]" id="invoice_items_attributes_0_quantity" value="" placeholder="Qty" class="form-control form-control-sm quantity" tabindex="214495989" maxlength="100" />
-                        </div>    
+                        </div>  
+
+                        <input class="form-control form description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="hidden" value="advanced" name="invoice[items_attributes][0][form]" id="invoice_items_attributes_0_forms" />
+                       
                         <div class="col-3">
                             <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="Description" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"></textarea>
                         </div>
@@ -522,6 +525,9 @@
                         <div class="col-2 form-group">
                                 <input type="text" name="invoice[items_attributes][0][price]" id="invoice_items_attributes_0_price" value="" placeholder="Unit Price" class="form-control form-control-sm price" tabindex="214495989" maxlength="100" />
                         </div>
+
+                        <input type="hidden" name="invoice[items_attributes][0][total]" id="third_subtotal" required/>
+
 
                         <div class="col-2">
                             <input class="form-control amount description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="text" value="0.00" name="invoice[items_attributes][0][amount]" id="invoice_items_attributes_0_amount" />
@@ -560,24 +566,27 @@
                           }
 
                           function addTax(event) {
+                            // Prevent the default form submission
+                            event.preventDefault();
+
                             var taxName = event.target.parentNode.querySelector("#taxName").value;
                             var taxRate = event.target.parentNode.querySelector("#invoice_items_attributes_0_tax").value;
 
                             if (taxName && taxRate) {
-                              // Remove any non-numeric characters from the entered tax rate
-                              taxRate = taxRate.replace(/[^0-9.]/g, '');
+                                // Remove any non-numeric characters from the entered tax rate
+                                taxRate = taxRate.replace(/[^0-9.]/g, '');
 
-                              // Append the percentage sign to the tax rate
-                              var taxRateWithPercentage = taxRate + "%";
+                                // Append the percentage sign to the tax rate
+                                var taxRateWithPercentage = taxRate + "%";
 
-                              // Replace the "Add Tax" button with the entered tax rate value
-                              var addButton = event.target.parentNode.parentNode.parentNode.querySelector(".add_tax");
-                              addButton.textContent = taxRateWithPercentage;
+                                // Replace the "Add Tax" button with the entered tax rate value
+                                var addButton = event.target.parentNode.parentNode.parentNode.querySelector(".add_tax");
+                                addButton.textContent = taxRateWithPercentage;
 
-                              // Close the popup
-                              closePopup(event);
+                                // Close the popup
+                                closePopup(event);
                             }
-                          }
+                        }
 
                           // // Wait for the DOM to be fully loaded before binding the event
                           // document.addEventListener("DOMContentLoaded", function () {

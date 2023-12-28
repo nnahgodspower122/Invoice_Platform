@@ -48,11 +48,23 @@
 	<link rel="stylesheet" href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.css">
 	<link rel="stylesheet" href="//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.css">
 	<link rel="stylesheet" href="css/styles.css">
+  
 	<!-- AdminLTE App -->
 	<script src="js/app.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <!-- Add jQuery UI from a CDN -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include jQuery UI (Ensure to include this after including jQuery) -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <!-- Include jQuery UI CSS (for datepicker styling) -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
   <style>
 /* Styles for the overlay background */
@@ -318,13 +330,13 @@
         <div class="px-4">
           <div class="guest-tabs">
             <ul class="nav nav-tabs">
-              <li class="nav-item"><a id="change-invoice-type-to-basic" aria-current="page" class="nav-link active">Basic Form</a></li>
-              <li class="nav-item" style="white-space: nowrap;"><a id="change-invoice-type-to-advanced" href="advanced_quote.php" aria-current="page" class="nav-link ">Advanced Form - <span class='fw-bold'>Due Date, Ship To, Qty</span></a></li>
+              <li class="nav-item"><a id="change-invoice-type-to-basic" aria-current="page" href="invoice_new.php" class="nav-link ">Basic Form</a></li>
+              <li class="nav-item" style="white-space: nowrap;"><a id="change-invoice-type-to-advanced" href="advanced_form.php" aria-current="page" class="nav-link active">Advanced Form - <span class='fw-bold'>Due Date, Ship To, Qty</span></a></li>
             </ul>
           </div>
 
           <div class="p-4 guest-page">
-            <form class="edit_invoice" id="invoice-form" action="quote_process.php" accept-charset="UTF-8" data-remote="true" method="post" enctype="multipart/form-data">
+            <form class="edit_invoice" id="invoice-form" action="quote_process2.php" accept-charset="UTF-8" data-remote="true" method="post" enctype="multipart/form-data">
                 <div class="row">
                   <div class="col-8">
                     <label for="invoice_from" class="form-label"><i class="fa fa-user icon"></i>&nbsp;&nbsp;From</label>
@@ -332,8 +344,8 @@
                   </div>
 
                   <div class="col-4 col-md-3 offset-md-1">
-                      <div id="logo" class="mt-2 position-relative">
-                          <br>
+                    <div id="logo" class="mt-2 position-relative">
+                      <br>
                           <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
                               <label for="signatureLogoInput1" id="uploadLabel1" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">
                                   Select Logo
@@ -342,7 +354,7 @@
                                   <br>
                                   Logo Gallery
                               </label>
-                              <input type="file" name="logo_image" id="signatureLogoInput1" style="display: none;" accept="image/*">
+                              <input type="file" name="logo_image" id="signatureLogoInput1" style="display: none;" accept="image/*" required>
                               <img id="uploadedImage1" style="display: none;" width="100" height="100" style="display: none; margin-left: 30px;; text-align: center;">
 
                           </button>
@@ -370,10 +382,8 @@
                           });
                       });
                       </script>
-                          
-                      </div>
+                    </div>
                   </div>
-
                 </div>
 
                 <div class="row my-3">
@@ -431,46 +441,103 @@
                     document.getElementById('invoice_date_issued_string').value = currentDate;
                 });
                 </script>
+                
+                <div class="row">
+                    <div class="col-8">
+                        <label for="invoice_shipping" class="form-label"><i class="fa fa-plane icon"></i>&nbsp;&nbsp;Ship To</label>
+                        <textarea class="form-control form-control-sm" placeholder="Your customers shipping address (optional)" rows="5" style="height: 8em;" tabindex="3" maxlength="5000" name="ship_to" id="invoice_shipping">
+                        </textarea>
+                    </div>
+                    <div class="col-4 col-md-3 offset-md-1">
+                        <label for="invoice_po_number" class="form-label">P.O.#</label>
+                        <input class="form-control form-control-sm" placeholder="Purchase Order (optional)" tabindex="6" maxlength="100" size="100" type="text" name="po_number" id="invoice_po_number" /><br/>
+                        
+                        
+
+                        <label for="invoice_due_date" class="form-label">Due Date</label>
+                        <input class="form-control form-control-sm datepicker" placeholder="yyyy-mm-dd (optional)" tabindex="7" maxlength="100" autocomplete="off" size="100" type="date" name="due_date" id="invoice_due_date_string" />
+
+                        <script>
+                        var $j = jQuery.noConflict();
+
+                        $j(document).ready(function() {
+
+                            // Initialize the datepicker for the input field with the ID 'invoice_due_date_string'
+                            $j("#invoice_due_date_string").datepicker({
+                                dateFormat: 'yy-mm-dd', // Date format
+                                changeMonth: true, // Allow changing the month
+                                changeYear: true // Allow changing the year
+                                // You can add more options as needed
+                            });
+                        });
+                        </script>
+
+                  
+                    </div>
+                </div>
 
                 <hr>
 
             
                 <div class="row">
-                  <div class="col-5 form-label">
-                      Description
-                  </div>
-                  <div class="col-2 form-label">
-                      Amount
-                  </div>
-                  <div class="col-2 form-label">
-                      Discount
-                  </div>
-                  <div class="col-2 form-label">
-                      Tax
-                  </div>
-                  <div class="col-1 form-label"></div>
-                </div>
+                    <div class="col-1 form-label">
+                        Qty
+                    </div>
+
+                    <div class="col-3 form-label">
+                        Description
+                    </div>
+
+                    <div class="col-2 form-label">
+                        Unit Price
+                    </div>
+
+                    <div class="col-2 form-label">
+                        Amount
+                    </div>
+
+                    <div class="col-1 form-label">
+                        Discount
+                    </div>
+
+                    <div class="col-2 form-label">
+                        Tax
+                    </div>
+
+                    <div class="col-1"></div>
+                          
+                    </div>
 
                 <div id="items">
                   <input type="hidden" name="invoice[items_attributes][0][id]" id="invoice_items_attributes_0_id" value="212952714" autocomplete="off" />
 
-                  <div class="row mb-3" id='row_item_212952714'>
-                      <div class="col-5">
-                          <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="Description" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"></textarea>
-                      </div>
-                      
-                          <input class="form-control form description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="hidden" value="basic" name="invoice[items_attributes][0][form]" id="invoice_items_attributes_0_forms" />
-                      
-                      <div class="col-2">
-                          <input class="form-control amount description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][amount]" id="invoice_items_attributes_0_amount" />
-                      </div>
-                      <input  type="hidden"  name="invoice[items_attributes][0][total]" value="" id="third_subtotal" required/>
+                  <div class="row mb-3" id='row_item_212952716'>
+                        <div class="col-1 form-group">
+                            <input type="text" name="invoice[items_attributes][0][quantity]" id="invoice_items_attributes_0_quantity" value="" placeholder="Qty" class="form-control form-control-sm quantity" tabindex="214495989" maxlength="100" />
+                        </div>  
 
-                      <div class="col-2">
-                          <input class="form-control discount description form-control-sm" placeholder="Discount" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][discount]" id="invoice_items_attributes_0_discount" />
-                      </div>
+                        <input class="form-control form description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="hidden" value="advanced" name="invoice[items_attributes][0][form]" id="invoice_items_attributes_0_forms" />
+                       
+                        <div class="col-3">
+                            <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="Description" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"></textarea>
+                        </div>
+                        
+                        <div class="col-2 form-group">
+                                <input type="text" name="invoice[items_attributes][0][price]" id="invoice_items_attributes_0_price" value="" placeholder="Unit Price" class="form-control form-control-sm price" tabindex="214495989" maxlength="100" />
+                        </div>
 
-                      <div class="col-2">
+                        <input type="hidden" name="invoice[items_attributes][0][total]" id="third_subtotal" required/>
+
+
+                        <div class="col-2">
+                            <input class="form-control amount description form-control-sm" placeholder="Amount" tabindex="212952714" maxlength="100" size="100" type="text" value="0.00" name="invoice[items_attributes][0][amount]" id="invoice_items_attributes_0_amount" />
+                        </div>
+
+                        <div class="col-1">
+                            <input class="form-control discount description form-control-sm" placeholder="Discount" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][discount]" id="invoice_items_attributes_0_discount" />
+                        </div>
+
+                        <div class="col-2">
                             <button type="button" onclick="openPopup(event)" class="add_tax btn btn-success form-control description form-control-sm" tabindex="212952714">Add Tax</button>
                         </div>
 
@@ -528,7 +595,7 @@
                           //   addButton.addEventListener("click", openPopup);
                           // });
                         </script>
-                        
+
                       <div class="col-1">
                           <input type="hidden" name="invoice[items_attributes][0][_destroy]" id="invoice_items_attributes_0__destroy" value="false" autocomplete="off" />
                           <button type="button" class="remove_fields btn btn-danger form-control description form-control-sm" tabindex="212952714">x</button>
@@ -547,7 +614,7 @@
                     </div>
                 </div>
 
-                <script src="js/script2.js"></script>
+                <script src="js/script7.js"></script>
 
                 <div id="total">
                   <div class="row mt-4">
@@ -564,21 +631,14 @@
                             ?>
                       </div>
                       <input type="hidden" name="invoice_currency_format" id="invoice_currency" value="INR" autocomplete="off" />
-                      <input type="hidden" name="" id="invoice_currency_format" value="%s %n" required/>
+                      <input type="hidden" name="invoice[currency_format]" id="invoice_currency_format" value="%s %n" autocomplete="off" />
                       <div class="col-6 col-md-3 text-end fs-5 fw-bold">
                         <a class="currency-formats dotted text-decoration-dotted" title="Change Currency &amp; Formatting" data-toggle="tooltip" data-placement="left" style="font-size: 1.2em;">
-                          <span id="currencySymbol">₹</span> <span id="second_subtotal"></span>
-
+                          <span id="currencySymbol">₹</span> <span id="second_subtotal">0.00<span>
                         </a>
-                        
-</script>
                       </div>
                     </div>
                 </div>
-                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                
-
-                
                 
                 <div class="row">
                   <div class="col-8">
@@ -597,7 +657,7 @@
                         
                         <button type="button" class="show-modal-logo btn btn-info p-4 btn-sm w-100">
                             <label for="signatureLogoInput" style="display: block; padding: 10px 20px; color: #fff; cursor: pointer; border-radius: 5px;">Add your Signature</label>
-                            <input type="file" name="image" id="signatureLogoInput" accept="image/*" style="display: none;" onchange="displayImage(this)">
+                            <input type="file" name="image" id="signatureLogoInput" accept="image/*" style="display: none;" onchange="displayImage(this)" required>
                         </button>
                         <div id="imagePreview"></div>
 
@@ -631,52 +691,51 @@
                 }
                 </script>
 
+                </div>
+                <div class="row" style="margin-top: 40px;">
+                <div class="col">
+                    <button type="submit" name="save_and_download" class="btn btn-success done w-100"><i class="fa fa-fw fa-save"></i> Save and Download Quote</button>
+                </div>
+                <div class="col">
+                  <button type="button" class="btn btn-info w-100" onclick="submitForm('email_button')" id="emailButton" disabled>
+                      <i class="fa fa-fw fa-envelope"></i> Send to Email
+                  </button>
+                </div>
 
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var invoiceFromInput = document.getElementById('invoice_from');
+                    var invoiceBillingInput = document.getElementById('invoice_billing');
+                    var termsInput = document.getElementById('terms');
+                    var emailButton = document.getElementById('emailButton');
 
-                <div class="row" style="margin-top: 40px; margin-left: 0px; ">
-                    <div class="row" style="margin-top: 40px;">
-                  <div class="col">
-                      <button type="submit" name="save_and_download" class="btn btn-success done w-100"><i class="fa fa-fw fa-save"></i> Save and Download Quote</button>
-                  </div>
-                  <div class="col">
-                    <button type="button" class="btn btn-info w-100" onclick="submitForm('email_button')" id="emailButton" disabled>
-                        <i class="fa fa-fw fa-envelope"></i> Send to Email
-                    </button>
-                  </div>
+                    // Function to check and enable the button
+                    function checkAndEnableButton() {
+                        if (invoiceFromInput.value.trim() !== '' && invoiceBillingInput.value.trim() !== '' && termsInput.value.trim() !== '') {
+                            emailButton.disabled = false;
+                        } else {
+                            emailButton.disabled = true;
+                        }
+                    }
 
-                  <script>
-                  document.addEventListener('DOMContentLoaded', function() {
-                      var invoiceFromInput = document.getElementById('invoice_from');
-                      var invoiceBillingInput = document.getElementById('invoice_billing');
-                      var termsInput = document.getElementById('terms');
-                      var emailButton = document.getElementById('emailButton');
+                    invoiceFromInput.addEventListener('input', checkAndEnableButton);
+                    invoiceBillingInput.addEventListener('input', checkAndEnableButton);
+                    termsInput.addEventListener('input', checkAndEnableButton);
+                });
 
-                      // Function to check and enable the button
-                      function checkAndEnableButton() {
-                          if (invoiceFromInput.value.trim() !== '' && invoiceBillingInput.value.trim() !== '' && termsInput.value.trim() !== '') {
-                              emailButton.disabled = false;
-                          } else {
-                              emailButton.disabled = true;
-                          }
-                      }
+                function submitForm(action) {
+                    if (action === 'email_button') {
+                        if (!document.getElementById('emailButton').disabled) {
+                            window.location.href = 'mailer.php';
+                        } else {
+                            alert('Please fill out the required fields first.');
+                        }
+                    } else {
+                        document.getElementById('myForm').submit();
+                    }
+                }
+                </script>
 
-                      invoiceFromInput.addEventListener('input', checkAndEnableButton);
-                      invoiceBillingInput.addEventListener('input', checkAndEnableButton);
-                      termsInput.addEventListener('input', checkAndEnableButton);
-                  });
-
-                  function submitForm(action) {
-                      if (action === 'email_button') {
-                          if (!document.getElementById('emailButton').disabled) {
-                              window.location.href = 'mailer.php';
-                          } else {
-                              alert('Please fill out the required fields first.');
-                          }
-                      } else {
-                          document.getElementById('myForm').submit();
-                      }
-                  }
-                  </script>
                 </div>
               </div>
             </form>
@@ -707,6 +766,7 @@
 
     <img alt="INDIA" src="images/india.png" width="32" height="32" />&nbsp;&nbsp;India&nbsp;&nbsp;·&nbsp;&nbsp;Copyright © 2023&nbsp;&nbsp;·&nbsp;&nbsp;Invoice Platform
 
+
         </div>
       </div>
 
@@ -735,3 +795,4 @@
     $('.js-example-basic-single').select2();
   </script>
 </body>
+a

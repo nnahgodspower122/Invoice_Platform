@@ -56,13 +56,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $discount = $item['discount'];
                     $tax = $item['tax'];
                     $tax_name = mysqli_real_escape_string($conn, $item['tax_name']);
-
+                    $form = $item['form'];
+                    $total = mysqli_real_escape_string($conn, $item['total']);
+                            
                     // Insert item details into the 'invoice_items' table, associating them with the invoice
-                    $sql = "INSERT INTO invoice_data_items (invoice_id, quantity, description, price, amount, discount, tax, tax_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO invoice_data_items (invoice_id, quantity, description, price, amount, discount, tax, tax_name, form, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
 
                     if ($stmt) {
-                        $stmt->bind_param("dsssssss", $invoice_id, $quantity, $description, $price, $amount, $discount, $tax, $tax_name);
+                        $stmt->bind_param("dsssssssss", $invoice_id, $quantity, $description, $price, $amount, $discount, $tax, $tax_name, $form, $total);
 
                         if ($stmt->execute()) {
                             // Item data inserted successfully
@@ -154,7 +156,7 @@ class PDF extends FPDF {
             $this->SetTextColor(0);
         }
 
-        $this->Ln(18); // Adjust the space after 'From Details' if necessary
+        $this->Ln(25); // Adjust the space after 'From Details' if necessary
     }
 
 
@@ -360,11 +362,8 @@ class PDF extends FPDF {
          $this->SetXY($startX + $column8Margin, $startY);
          $this->MultiCell($columnWidth2, 8, $column8Text, 0, 'R');
 
-
-          
-
         // Move to the next line
-        $this->Ln(12);
+        $this->Ln(10);
 
         $this->SetFillColor(240, 240, 240);
         

@@ -17,10 +17,11 @@ if (isset($_SESSION['login_username'])) {
     if (isset($_GET['invoice_number'])) {
         $invoice_number = $_GET['invoice_number'];
 
-        // Query to retrieve invoice data for the logged-in user and specific invoice number
-        $sql = "SELECT i.*, ii.* FROM invoice_data i
-        JOIN invoice_data_items ii ON i.id = ii.invoice_id
-        WHERE i.username = ? AND i.invoice_number = ?";
+        // Query to retrieve invoice data and related items for the logged-in user and specific invoice number
+        $sql = "SELECT i.*, ii.*
+                FROM invoice_data i
+                JOIN invoice_data_items ii ON i.id = ii.invoice_id
+                WHERE i.username = ? AND i.invoice_number = ?";
         $stmt = $conn->prepare($sql);
 
         if ($stmt) {
@@ -30,24 +31,29 @@ if (isset($_SESSION['login_username'])) {
                 $result = $stmt->get_result();
 
                 if ($result->num_rows > 0) {
-                    // Fetch and display the invoice data
-                    $row = $result->fetch_assoc();
-                    $invoice_date = $row['invoice_date'];
-                    $from_field = $row['from_field'];
-                    $bill_to = $row['bill_to'];
-                    $ship_to = $row['ship_to'];
-                    $terms = $row['terms'];
-                    $amount = $row['amount'];
-                    $imageData = $row['image'];
-                    $logo_image = $row['logo_image'];
-                    $description = $row['description'];
-                    $discount = $row['discount'];
-                    $tax = $row['tax'];
-                    $tax_name = $row['tax_name'];
-                    $quantity = $row['quantity'];
-                    $invoice_currency_format = $row['invoice_currency_format'];
+                    // Fetch and display the data for each item
+                    while ($row = $result->fetch_assoc()) {
+                        // Access the columns from invoice_data
+                        $invoice_date = $row['invoice_date'];
+                        $from_field = $row['from_field'];
+                        $bill_to = $row['bill_to'];
+                        // ... (other invoice_data columns)
+                        $ship_to = $row['ship_to'];
+                        $terms = $row['terms'];
+                        $imageData = $row['image'];
+                        $logo_image = $row['logo_image'];
+                        $tax_name = $row['tax_name'];
+                        $invoice_currency_format = $row['invoice_currency_format'];
+                        $discount = $row['discount'];
+                        // Access the columns from invoice_data_items
+                        $amount = $row['amount'];
+                        $description = $row['description'];
+                        $quantity = $row['quantity'];
+                        $total = $row['total'];
+                        // ... (other invoice_data_items columns)
 
-                    // Output other HTML as needed
+                        // Output HTML for each item as needed
+                    }
                 } else {
                     echo "No records found for the specified invoice number.";
                 }
@@ -71,6 +77,7 @@ if (isset($_SESSION['login_username'])) {
     echo "User is not logged in.";
 }
 ?>
+
 
 
 
@@ -500,7 +507,6 @@ if ($stmt) {
 
                 <hr>
 
-            
                 <div class="row">
                   <div class="col-5 form-label">
                       Description
@@ -517,100 +523,183 @@ if ($stmt) {
                   <div class="col-1 form-label"></div>
                 </div>
 
-                <div id="items">
-                  <input type="hidden" name="invoice[items_attributes][0][id]" id="invoice_items_attributes_0_id" value="212952714" autocomplete="off" />
+                <?php
+              // Check if the user is logged in
+              if (isset($_SESSION['login_username'])) {
+                $username = $_SESSION['login_username']; // Get the logged-in user's username
 
-                  <div class="row mb-3" id='row_item_212952714'>
-                      <div class="col-5">
-                          <textarea name="invoice[items_attributes][0][description]" id="invoice_items_attributes_0_description" placeholder="<?php echo htmlspecialchars($description); ?>" class="form-control description form-control-sm" rows="2" tabindex="212952714" maxlength="5000"><?php $description = str_replace('\r', "\r", $description);
-                      $description = str_replace('\n', "\n", $description);
+                // Connect to your database
+                $conn = mysqli_connect("localhost", "root", "", "invoicemgsys");
 
-                      echo (htmlspecialchars($description)); ?></textarea>
-                      </div>
+                if (!$conn) {
+                    die("Connection failed: " . mysqli_connect_error());
+                }
 
-                      <div class="col-2">
-                          <input class="form-control amount description form-control-sm" placeholder="<?php echo htmlspecialchars($amount); ?>" value="<?php echo htmlspecialchars($amount); ?>" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][amount]" id="invoice_items_attributes_0_amount" />
-                      </div>
+                // Check if 'invoice_number' is set in the URL
+                if (isset($_GET['invoice_number'])) {
+                    $invoice_number = $_GET['invoice_number'];
 
-                      <div class="col-2">
-                          <input class="form-control discount description form-control-sm" placeholder="<?php echo htmlspecialchars($discount); ?>" value="<?php echo htmlspecialchars($discount); ?>" tabindex="212952714" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][0][discount]" id="invoice_items_attributes_0_discount" />
-                      </div>
+                    // Query to retrieve invoice data and related items for the logged-in user and specific invoice number
+                    $sql = "SELECT i.*, ii.*
+                            FROM invoice_data i
+                            JOIN invoice_data_items ii ON i.id = ii.invoice_id
+                            WHERE i.username = ? AND i.invoice_number = ?";
+                    $stmt = $conn->prepare($sql);
 
-                        <div class="col-2">
-                            <button type="button" onclick="openPopup(event)" class="add_tax btn btn-success form-control description form-control-sm" tabindex="212952714">Add Tax</button>
-                        </div>
+                    if ($stmt) {
+                        $stmt->bind_param("ss", $username, $invoice_number);
 
-                        <div class="popup-overlay" id="popupOverlay" style="opacity: 0; visibility: hidden; pointer-events: none;">
-                            <div class="popup-form" > <!-- Initially hidden -->
-                              <span class="close-button" onclick="closePopup(event)">&times;</span>
-                              <h2>Add A Tax</h2>
-                              <input type="text" name="invoice[items_attributes][0][tax_name]]" placeholder="Tax Name" value="<?php echo htmlspecialchars($tax_name); ?>" id="taxName">
-                              <input type="text" class="tax" placeholder="Tax Rate %" tabindex="212952714" name="invoice[items_attributes][0][tax]" value="<?php echo htmlspecialchars($tax); ?>" id="invoice_items_attributes_0_tax">
-                              <button onclick="addTax(event)">Add Tax</button>
-                            </div>
-                        </div>
-                        <script>
-                          function openPopup(event) {
-                            var popupOverlay = event.target.parentNode.parentNode.querySelector("#popupOverlay");
-                            popupOverlay.style.opacity = "100%";
-                            popupOverlay.style.visibility = "visible";
-                            popupOverlay.style['pointer-events'] = "all";
-                          }
+                        if ($stmt->execute()) {
+                            $result = $stmt->get_result();
 
-                          function closePopup(event) {
-                            var popupOverlay = event.target.parentNode.parentNode;
-                            popupOverlay.style.opacity = "0";
-                            popupOverlay.style.visibility = "hidden";
-                            popupOverlay.style['pointer-events'] = "none";
-                          }
+              if ($result->num_rows > 0) {
+                  // Fetch and display the invoice data
+                  $row = $result->fetch_assoc();
+                  $invoice_date = $row['invoice_date'];
+                  $from_field = $row['from_field'];
+                  $bill_to = $row['bill_to'];
+                  $tax_name = $row['tax_name'];
+                  $invoice_currency_format = $row['invoice_currency_format'];
+                  $discount = $row['discount'];
+                  $tax = $row['tax'];
+                  // Access the columns from invoice_data_items
+                  $amount = $row['amount'];
+                  $description = $row['description'];
+                  $quantity = $row['quantity'];
+                  $price = $row['price'];
+                  $total = $row['total'];
+                  // Output other HTML as needed
 
-                          function addTax(event) {
-                            var taxName = event.target.parentNode.querySelector("#taxName").value;
-                            var taxRate = event.target.parentNode.querySelector("#invoice_items_attributes_0_tax").value;
+                  // Fetch and display the data for each item
+                  $result->data_seek(0); // Reset the result set pointer
+                  echo '<div id="items">';
+                  $itemIndex = 0;
 
-                            if (taxName && taxRate) {
-                              // Remove any non-numeric characters from the entered tax rate
-                              taxRate = taxRate.replace(/[^0-9.]/g, '');
+                  while ($row = $result->fetch_assoc()) {
+                      echo '<div class="row mb-3" id="row_item_212952714">';
+                      echo '<div class="col-5">';
+                      echo '<textarea name="invoice[items_attributes][' . $itemIndex . '][description]" id="invoice_items_attributes_' . $itemIndex . '_description" placeholder="Description" class="form-control description form-control-sm" rows="2" tabindex="' . $row['id'] . '" maxlength="5000">' . htmlspecialchars($row['description']) . '</textarea>';
+                      echo '</div>';
 
-                              // Append the percentage sign to the tax rate
-                              var taxRateWithPercentage = taxRate + "%";
+                      // if (isset($row['price'])) {
+                      //   echo '<div class="col-2">';
+                      //   echo '<input class="form-control price description form-control-sm" placeholder="' . htmlspecialchars($row['price']) . '" value="' . htmlspecialchars($row['price']) . '" tabindex="' . $row['id'] . '" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][' . $itemIndex . '][price]" id="invoice_items_attributes_' . $itemIndex . '_price" />';
+                      //   echo '</div>';
+                      // } else {
+                      echo '<div class="col-2">';
+                      echo '<input class="form-control amount description form-control-sm" placeholder="Amount" value="' . htmlspecialchars($row['amount']) . '" tabindex="' . $row['id'] . '" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][' . $itemIndex . '][amount]" id="invoice_items_attributes_' . $itemIndex . '_amount" />';
+                      echo '</div>';
+                      // }
 
-                              // Replace the "Add Tax" button with the entered tax rate value
-                              var addButton = event.target.parentNode.parentNode.parentNode.querySelector(".add_tax");
-                              addButton.textContent = taxRateWithPercentage;
-
-                              // Close the popup
-                              closePopup(event);
-                            }
-                          }
-
-                          // // Wait for the DOM to be fully loaded before binding the event
-                          // document.addEventListener("DOMContentLoaded", function () {
-                          //   // Bind the click event to the "Add Tax" button
-                          //   var addButton = document.querySelector(".add_tax");
-                          //   addButton.addEventListener("click", openPopup);
-                          // });
-                        </script>
-
-                      <div class="col-1">
-                          <input type="hidden" name="invoice[items_attributes][0][_destroy]" id="invoice_items_attributes_0__destroy" value="false" autocomplete="off" />
-                          <button type="button" class="remove_fields btn btn-danger form-control description form-control-sm" tabindex="212952714">x</button>
-                      </div>
-                  </div>
-                </div>
+                      echo '<input  type="hidden"  name="invoice[items_attributes][' . $itemIndex . '][total]" value="" id="third_subtotal" required/>';
 
 
-                <div class="actions">
-                    <div class="row">
-                        <div class="col-12 col-md-12">
-                            <a id="add_item" class="btn btn-info btn-sm w-100">
-                                Add New Item
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                      echo '<div class="col-2">';
+                      echo '<input class="form-control discount description form-control-sm" placeholder="Discount" value="' . htmlspecialchars($row['discount']) . '" tabindex="' . $row['id'] . '" maxlength="100" size="100" type="text" value="" name="invoice[items_attributes][' . $itemIndex . '][discount]" id="invoice_items_attributes_' . $itemIndex . '_discount" />';
+                      echo '</div>';
 
-                <script src="js/script2.js"></script>
+
+
+                      echo '<div class="col-2">';
+                      echo '<button type="button" onclick="openPopup(event)" class="add_tax btn btn-success form-control description form-control-sm" tabindex="' . $row['id'] . '">' . htmlspecialchars($row['tax_name']) . ' ' . htmlspecialchars($row['tax']) . '</button>';
+                      echo '</div>';
+
+                      // Popup HTML and JavaScript
+                      echo '<div class="popup-overlay" id="popupOverlay" style="opacity: 0; visibility: hidden; pointer-events: none;">';
+                      echo '<div class="popup-form"> <!-- Initially hidden -->';
+                      echo '<span class="close-button" onclick="closePopup(event)">&times;</span>';
+                      echo '<h2>Add A Tax</h2>';
+                      echo '<input type="text" name="invoice[items_attributes][' . $itemIndex . '][tax_name]]" placeholder="Tax Name" value="' . htmlspecialchars($row['tax_name']) . '" id="taxName">';
+                      echo '<input type="text" class="tax" placeholder="Tax Rate %" tabindex="212952714" value="' . htmlspecialchars($row['tax']) . '" name="invoice[items_attributes][' . $itemIndex . '][tax]" id="taxRate">';
+                      echo '<button onclick="addTax(event)">Add Tax</button>';
+
+                      echo '</div>';
+                      echo '</div>';
+
+                      echo '<script>';
+                      echo 'function openPopup(event) {';
+                      echo 'var popupOverlay = event.target.parentNode.parentNode.querySelector("#popupOverlay");';
+                      echo 'popupOverlay.style.opacity = "100%";';
+                      echo 'popupOverlay.style.visibility = "visible";';
+                      echo 'popupOverlay.style["pointer-events"] = "all";';
+                      echo '}';
+                      echo 'function closePopup(event) {';
+                      echo 'var popupOverlay = event.target.parentNode.parentNode;';
+                      echo 'popupOverlay.style.opacity = "0";';
+                      echo 'popupOverlay.style.visibility = "hidden";';
+                      echo 'popupOverlay.style["pointer-events"] = "none";';
+                      echo '}';
+                      echo 'function addTax(event) {';
+                      echo 'event.preventDefault();';
+                      echo 'var taxName = document.getElementById("taxName").value;';
+                      echo 'var taxRate = document.getElementById("taxRate").value;';
+                      echo 'if (taxName && taxRate) {';
+                      echo 'taxRate = taxRate.replace(/[^0-9.]/g, "");';
+                      echo 'var taxRateWithPercentage = taxRate + "%";';
+                      echo 'var addButton = event.target.parentNode.parentNode.parentNode.querySelector(".add_tax");';
+                      echo 'addButton.textContent = taxRateWithPercentage;';
+                      echo 'closePopup(event);';
+                      echo '}';
+                      echo '}';
+                      
+                      echo '</script>';
+
+                    
+                      echo '<div class="col-1">';
+                      echo '<input type="hidden" name="invoice[items_attributes][0][_destroy]" id="invoice_items_attributes_0__destroy" value="false" autocomplete="off" />';
+                      echo '<button type="button" class="remove_fields btn btn-danger form-control description form-control-sm" tabindex="212952714">x</button>';
+                      echo '</div>';
+                      echo '</div>';
+                      
+
+                     
+                      $itemIndex++;
+                  }
+
+                                    echo '</div>';
+                  echo '<div class="actions">';
+                  echo '<div class="row">';
+                  echo '<div class="col-12 col-md-12">';
+                  echo '<a id="add_item" class="btn btn-info btn-sm w-100">';
+                  echo 'Add New Item';
+                  echo '</a>';
+                  echo '</div>';
+                  echo '</div>';
+                  echo '<script src="js/script2.js"></script>';
+                  echo '</div>';
+              } else {
+                  echo "No records found for the specified invoice number.";
+              }
+
+
+
+              } else {
+                // Handle the error
+                echo "Error: " . $stmt->error;
+              }
+
+              $stmt->close();
+              } else {
+              // Handle the error in preparing the statement
+              echo "Error in preparing the statement: " . $conn->error;
+              }
+              } else {
+              echo "Invoice number not provided in the URL.";
+              }
+
+              // Close the database connection
+              $conn->close();
+              } else {
+              echo "User is not logged in.";
+              }
+              // ... (remaining code)
+              ?>
+
+
+
+                     
+
+
 
                 <div id="total">
                   <div class="row mt-4">
@@ -630,7 +719,7 @@ if ($stmt) {
                       <input type="hidden" name="" id="invoice_currency_format" value="%s %n" required/>
                       <div class="col-6 col-md-3 text-end fs-5 fw-bold">
                         <a class="currency-formats dotted text-decoration-dotted" title="Change Currency &amp; Formatting" data-toggle="tooltip" data-placement="left" style="font-size: 1.2em;">
-                          <span id="currencySymbol"><?php echo htmlspecialchars($invoice_currency_format); ?></span> <span id="second_subtotal"><?php echo htmlspecialchars($amount); ?><span>
+                          <span id="currencySymbol"><?php echo htmlspecialchars($invoice_currency_format); ?></span> <span id="second_subtotal"><?php echo htmlspecialchars($total); ?><span>
                         </a>
                       </div>
                     </div>
@@ -697,15 +786,15 @@ if ($stmt) {
                 <div class="row" style="margin-top: 40px; margin-left: 0px; ">
                     <div class="row" style="margin-top: 40px;">
                   <div class="col">
-                      <button type="submit" name="save_and_download" class="btn btn-success done w-100"><i class="fa fa-fw fa-save"></i> Save and Download Invoice</button>
+                      <button type="submit" name="save_and_download" class="btn btn-success done w-100"><i class="fa fa-fw fa-save"></i>Save Invoice</button>
                   </div>
-                  <!-- <div class="col">
-                    <button type="button" class="btn btn-info w-100" onclick="submitForm('email_button')" id="emailButton" disabled>
-                        <i class="fa fa-fw fa-envelope"></i> Send to Email
+                  <div class="col">
+                    <button type="submit" class="btn btn-info w-100" name="download">
+                    <i class="fa fa-arrow-down icon-download" style="color: white;"></i> Download
                     </button>
-                  </div> -->
+                  </div>
 
-                  <script>
+                  <!-- <script>
                   document.addEventListener('DOMContentLoaded', function() {
                       var invoiceFromInput = document.getElementById('invoice_from');
                       var invoiceBillingInput = document.getElementById('invoice_billing');
@@ -737,7 +826,7 @@ if ($stmt) {
                           document.getElementById('myForm').submit();
                       }
                   }
-                  </script>
+                  </script> -->
                 </div>
               </div>
             </form>

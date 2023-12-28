@@ -63,13 +63,14 @@ if (isset($_SESSION['login_username'])) {
                             $discount = mysqli_real_escape_string($conn, $item['discount']);
                             $tax = mysqli_real_escape_string($conn, $item['tax']);
                             $tax_name = mysqli_real_escape_string($conn, $item['tax_name']);
-
+                            $form = mysqli_real_escape_string($conn, $item['form']);
+                            $total = mysqli_real_escape_string($conn, $item['total']);
                             // Insert item details into the 'invoice_data_items' table, associating them with the invoice
-                            $sql = "INSERT INTO invoice_data_items (invoice_id, description, amount, discount, tax, tax_name) VALUES (?, ?, ?, ?, ?, ?)";
+                            $sql = "INSERT INTO invoice_data_items (invoice_id, description, amount, discount, tax, tax_name, form, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                             $stmt = $conn->prepare($sql);
 
                             if ($stmt) {
-                                $stmt->bind_param("dsssss", $invoice_id, $description, $amount, $discount, $tax, $tax_name);
+                                $stmt->bind_param("dsssssss", $invoice_id, $description, $amount, $discount, $tax, $tax_name, $form, $total);
 
                                 if ($stmt->execute()) {
                                     // Item data inserted successfully
@@ -77,7 +78,7 @@ if (isset($_SESSION['login_username'])) {
                                     // echo "<img src='$imagePath' alt='Logo'>";
                                     // echo $logoImagePath;
 
-
+                                   
                                 } else {
                                     // Handle the error
                                     echo "Error: " . $stmt->error;
@@ -166,7 +167,7 @@ class PDF extends FPDF {
             $this->SetTextColor(0);
         }
 
-        $this->Ln(18); // Adjust the space after 'From Details' if necessary
+        $this->Ln(25); // Adjust the space after 'From Details' if necessary
     }
     
     

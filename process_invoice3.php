@@ -90,28 +90,38 @@ if (isset($_SESSION['login_username'])) {
                         $discount = mysqli_real_escape_string($conn, $item['discount']);
                         $tax = mysqli_real_escape_string($conn, $item['tax']);
                         $tax_name = mysqli_real_escape_string($conn, $item['tax_name']);
+                        $total = mysqli_real_escape_string($conn, $item['total']);
+                    
+                        // Check if the combination of invoice_id and description already exists in invoice_data_items
+                        $check_combination_sql = "SELECT id FROM invoice_data_items WHERE invoice_id = ? AND description = ?";
+                        $check_combination_stmt = $conn->prepare($check_combination_sql);
+                        $check_combination_stmt->bind_param("is", $invoice_id, $description);
+                        $check_combination_stmt->execute();
+                        $check_combination_stmt->store_result();
 
-                        // Insert or update item details into the 'invoice_data_items' table, associating them with the invoice
-                        $item_sql = "INSERT INTO invoice_data_items (invoice_id, description, amount, discount, tax, tax_name) VALUES (?, ?, ?, ?, ?, ?)
-                                     ON DUPLICATE KEY UPDATE description = VALUES(description), amount = VALUES(amount), discount = VALUES(discount), tax = VALUES(tax), tax_name = VALUES(tax_name)";
-                        $item_stmt = $conn->prepare($item_sql);
-
-                        if ($item_stmt) {
-                            $item_stmt->bind_param("dsssss", $invoice_id, $description, $amount, $discount, $tax, $tax_name);
-
-                            if ($item_stmt->execute()) {
-                                // Item data inserted or updated successfully
-                                echo "";
-                            } else {
-                                // Handle the error
-                                echo "Error: " . $item_stmt->error;
-                            }
-
-                            $item_stmt->close();
+                        if ($check_combination_stmt->num_rows > 0) {
+                            // The combination already exists, perform an UPDATE
+                            $item_sql = "UPDATE invoice_data_items 
+                                        SET amount = ?, discount = ?, tax = ?, tax_name = ?, total = ? 
+                                        WHERE invoice_id = ? AND description = ?";
+                            $item_stmt = $conn->prepare($item_sql);
+                            $item_stmt->bind_param("sssssis", $amount, $discount, $tax, $tax_name, $total, $invoice_id, $description);
                         } else {
-                            // Handle the error in preparing the statement
-                            echo "Error in preparing the statement: " . $conn->error;
+                            // The combination doesn't exist, perform an INSERT
+                            $item_sql = "INSERT INTO invoice_data_items (invoice_id, description, amount, discount, tax, tax_name, total) 
+                                        VALUES (?, ?, ?, ?, ?, ?, ?)";
+                            $item_stmt = $conn->prepare($item_sql);
+                            $item_stmt->bind_param("issssss", $invoice_id, $description, $amount, $discount, $tax, $tax_name, $total);
                         }
+
+                    // Execute the statement
+                    $item_stmt->execute();
+
+                    // Close the statement
+                    $item_stmt->close();
+
+                    
+            
                     }
                 } else {
                     // Handle the error
@@ -120,12 +130,13 @@ if (isset($_SESSION['login_username'])) {
             } else {
                 echo "Record not found";
             }
-
+            header("Location: edit_invoice.php?invoice_number=" . urlencode($invoice_number));
+            exit();
             // Close the database connection
             $conn->close();
         }
-    } elseif (isset($_POST['email_button'])) {
-        echo "<script>window.location.href = 'mailer.php';</script>";
+    } elseif (isset($_POST['download'])) {
+        echo "good";
     } else {
         echo "User is not logged in.";
     }
@@ -188,7 +199,7 @@ class PDF extends FPDF {
             $this->SetTextColor(0);
         }
 
-        $this->Ln(18); // Adjust the space after 'From Details' if necessary
+        $this->Ln(25); // Adjust the space after 'From Details' if necessary
     }
     
     
